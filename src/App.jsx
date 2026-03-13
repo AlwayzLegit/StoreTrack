@@ -1,5 +1,51 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { supabase } from "./supabase";
 
+// ─── Auth ────────────────────────────────────────────────────────────────────
+const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || "stortrack2026";
+const AUTH_KEY = "stortrack_auth";
+
+function useAuth() {
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem(AUTH_KEY) === "1");
+  const login = (pw) => {
+    if (pw === APP_PASSWORD) { sessionStorage.setItem(AUTH_KEY, "1"); setAuthed(true); return true; }
+    return false;
+  };
+  const logout = () => { sessionStorage.removeItem(AUTH_KEY); setAuthed(false); };
+  return { authed, login, logout };
+}
+
+function LockScreen({ onLogin }) {
+  const [pw, setPw] = useState("");
+  const [err, setErr] = useState(false);
+  const submit = (e) => {
+    e.preventDefault();
+    if (!onLogin(pw)) { setErr(true); setPw(""); setTimeout(() => setErr(false), 1500); }
+  };
+  return (
+    <div style={{ minHeight: "100vh", background: "#0F1118", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+      <div style={{ background: "#181B25", borderRadius: 16, padding: "40px 36px", width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.5)", textAlign: "center" }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: "linear-gradient(135deg, #5B8DEF, #8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 auto 20px" }}>S</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#E8E9ED", marginBottom: 4 }}>StorTrack</div>
+        <div style={{ fontSize: 12, color: "#6B7084", marginBottom: 28 }}>Enter your password to continue</div>
+        <form onSubmit={submit}>
+          <input
+            type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Password"
+            autoFocus
+            style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${err ? "#D45B5B" : "#252836"}`, background: "#0F1118", color: "#E8E9ED", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 12, transition: "border-color 0.2s" }}
+          />
+          {err && <div style={{ color: "#D45B5B", fontSize: 12, marginBottom: 10 }}>Incorrect password</div>}
+          <button type="submit" style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: "#5B8DEF", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            Unlock
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
 function useWidth() {
   const [w, setW] = useState(window.innerWidth);
   useEffect(() => {
@@ -10,7 +56,7 @@ function useWidth() {
   return w;
 }
 
-const PAYMENT_TYPES = ["Visa/MC","AMEX","Cash","Finance","Check","COD"];
+const PAYMENT_TYPES = ["Visa/MC", "AMEX", "Cash", "Finance", "Check", "COD"];
 const EXPENSE_CATS = [
   { id: "vendors", label: "Vendors / Inventory", color: "#E8853D" },
   { id: "utilities", label: "Utilities", color: "#5B8DEF" },
@@ -25,54 +71,144 @@ const today = () => new Date().toISOString().slice(0, 10);
 const fmt = (n) => "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pct = (n) => (Number(n || 0) * 100).toFixed(1) + "%";
 
-const sampleSales = [
-  { id: 1, date: "2026-03-01", customer: "Maria Santos", phone: "310-555-0101", items: "Queen Set - Avery PT, CoolPro Pillow", address: "1221 Selby Ave Los Angeles CA 90024", price: 1399, cost: 636, salesperson: "Ronnie", deliveryDate: "2026-03-04", deliveryTime: "2-5pm", delivered: true,
-    payments: [
-      { id: 101, date: "2026-03-01", amount: 1399, method: "Visa/MC", note: "Paid in full" }
-    ]},
-  { id: 2, date: "2026-03-01", customer: "Jake Morrison", phone: "310-555-0202", items: "Full Matt - Bristol FM, Memory Pillow", address: "2935 Westwood Blvd Los Angeles CA 90064", price: 733, cost: 275, salesperson: "David", deliveryDate: "2026-03-05", deliveryTime: "11-2pm", delivered: true,
-    payments: [
-      { id: 102, date: "2026-03-01", amount: 400, method: "AMEX", note: "Initial deposit" },
-      { id: 103, date: "2026-03-04", amount: 333, method: "AMEX", note: "Balance paid on delivery" }
-    ]},
-  { id: 3, date: "2026-03-02", customer: "Linda Park", phone: "424-555-0303", items: "King Set - Christelle PS, Frame, 2x MicroGel", address: "10316 Bannockburn Dr Los Angeles CA 90064", price: 2199, cost: 980, salesperson: "Ronnie", deliveryDate: "2026-03-08", deliveryTime: "1-4pm", delivered: false,
-    payments: [
-      { id: 104, date: "2026-03-02", amount: 800, method: "Cash", note: "Deposit" },
-    ]},
-  { id: 4, date: "2026-03-02", customer: "Tom Briggs", phone: "818-555-0404", items: "Twin Set - Ambassador PT, Frame/Glides", address: "808 Bien Veneda Ave Pacific Palisades CA 90272", price: 459, cost: 184, salesperson: "Sako", deliveryDate: "2026-03-04", deliveryTime: "2-5pm", delivered: true,
-    payments: [
-      { id: 105, date: "2026-03-02", amount: 459, method: "Finance", note: "Financed in full" }
-    ]},
-  { id: 5, date: "2026-03-03", customer: "Nadia Youssef", phone: "310-555-0505", items: "Queen Matt - Cashmere BT, CoolPro", address: "3780 Ocean View Ave Los Angeles CA 90066", price: 1100, cost: 495, salesperson: "David", deliveryDate: "2026-03-07", deliveryTime: "10-1pm", delivered: false,
-    payments: [
-      { id: 106, date: "2026-03-03", amount: 500, method: "Visa/MC", note: "Deposit" },
-    ]},
-  { id: 6, date: "2026-03-04", customer: "Chris Albright", phone: "310-555-0606", items: "Cal King Set - Moonlit Night, Frame/Glides, 2x MicroGel", address: "3612 Barham Blvd Los Angeles CA 90068", price: 1650, cost: 720, salesperson: "Ronnie", deliveryDate: "2026-03-10", deliveryTime: "2-5pm", delivered: false,
-    payments: [
-      { id: 107, date: "2026-03-04", amount: 650, method: "AMEX", note: "Deposit" },
-      { id: 108, date: "2026-03-09", amount: 500, method: "Cash", note: "Partial payment" },
-    ]},
-  { id: 7, date: "2026-03-05", customer: "Emily Chen", phone: "424-555-0707", items: "Full Set - Ambassador PS, Frame", address: "1930 Fairburn Ave Los Angeles CA 90025", price: 599, cost: 288, salesperson: "Sako", deliveryDate: "2026-03-06", deliveryTime: "11-2pm", delivered: true,
-    payments: [
-      { id: 109, date: "2026-03-05", amount: 599, method: "Visa/MC", note: "Paid in full" }
-    ]},
-];
+// ─── Supabase helpers ────────────────────────────────────────────────────────
+function useData() {
+  const [sales, setSales] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [salespeople, setSalespeople] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const sampleExpenses = [
-  { id: 1, date: "2026-03-01", category: "vendors", vendor: "SOP Mattress", amount: 4250, note: "Monthly restock" },
-  { id: 2, date: "2026-03-01", category: "vendors", vendor: "Leggit/Holly", amount: 1800, note: "Frames order" },
-  { id: 3, date: "2026-03-03", category: "utilities", vendor: "LADWP", amount: 285, note: "Electric" },
-  { id: 4, date: "2026-03-03", category: "utilities", vendor: "Spectrum", amount: 89, note: "Internet" },
-  { id: 5, date: "2026-03-05", category: "ccfees", vendor: "AMEX Processing", amount: 142, note: "Monthly fee" },
-  { id: 6, date: "2026-03-05", category: "advertising", vendor: "Yelp", amount: 350, note: "Monthly ad" },
-  { id: 7, date: "2026-03-01", category: "employees", vendor: "Ronnie", amount: 2800, note: "Bi-weekly" },
-  { id: 8, date: "2026-03-01", category: "employees", vendor: "David", amount: 2400, note: "Bi-weekly" },
-  { id: 9, date: "2026-03-01", category: "employees", vendor: "Sako", amount: 2200, note: "Bi-weekly" },
-  { id: 10, date: "2026-03-03", category: "accounting", vendor: "Dorian Tax", amount: 500, note: "Monthly" },
-];
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [{ data: saleRows, error: se }, { data: payRows, error: pe }, { data: expRows, error: ee }, { data: spRows, error: spe }] = await Promise.all([
+        supabase.from("sales").select("*").order("date", { ascending: false }),
+        supabase.from("payments").select("*").order("date", { ascending: true }),
+        supabase.from("expenses").select("*").order("date", { ascending: false }),
+        supabase.from("salespeople").select("*").order("name"),
+      ]);
+      if (se || pe || ee || spe) throw se || pe || ee || spe;
 
-const initialSalespeople = ["Ronnie", "David", "Sako"];
+      // Attach payments to sales
+      const payMap = {};
+      (payRows || []).forEach(p => {
+        if (!payMap[p.sale_id]) payMap[p.sale_id] = [];
+        payMap[p.sale_id].push({ id: p.id, date: p.date, amount: Number(p.amount), method: p.method, note: p.note });
+      });
+      const hydratedSales = (saleRows || []).map(s => ({
+        id: s.id,
+        date: s.date,
+        customer: s.customer,
+        phone: s.phone || "",
+        items: s.items || "",
+        address: s.address || "",
+        price: Number(s.price),
+        cost: Number(s.cost || 0),
+        salesperson: s.salesperson || "",
+        deliveryDate: s.delivery_date || "",
+        deliveryTime: s.delivery_time || "",
+        delivered: s.delivered || false,
+        payments: payMap[s.id] || [],
+      }));
 
+      setSales(hydratedSales);
+      setExpenses((expRows || []).map(e => ({ id: e.id, date: e.date, category: e.category, vendor: e.vendor, amount: Number(e.amount), note: e.note || "" })));
+      setSalespeople((spRows || []).map(s => s.name));
+    } catch (err) {
+      setError(err.message || "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  // Sales
+  const addSale = async (saleData, initPayment) => {
+    const { data, error } = await supabase.from("sales").insert([{
+      date: saleData.date,
+      customer: saleData.customer,
+      phone: saleData.phone,
+      items: saleData.items,
+      address: saleData.address,
+      price: Number(saleData.price),
+      cost: Number(saleData.cost || 0),
+      salesperson: saleData.salesperson,
+      delivery_date: saleData.deliveryDate || null,
+      delivery_time: saleData.deliveryTime || null,
+      delivered: false,
+    }]).select().single();
+    if (error) throw error;
+
+    if (initPayment && Number(initPayment.amount) > 0) {
+      const { error: pe } = await supabase.from("payments").insert([{
+        sale_id: data.id,
+        date: saleData.date,
+        amount: Number(initPayment.amount),
+        method: initPayment.method,
+        note: initPayment.note || "Initial deposit",
+      }]);
+      if (pe) throw pe;
+    }
+    await loadAll();
+  };
+
+  const recordPayment = async (saleId, payData) => {
+    const { error } = await supabase.from("payments").insert([{
+      sale_id: saleId,
+      date: payData.date,
+      amount: Number(payData.amount),
+      method: payData.method,
+      note: payData.note || "",
+    }]);
+    if (error) throw error;
+    await loadAll();
+  };
+
+  const toggleDelivered = async (saleId, current) => {
+    const { error } = await supabase.from("sales").update({ delivered: !current }).eq("id", saleId);
+    if (error) throw error;
+    setSales(prev => prev.map(s => s.id === saleId ? { ...s, delivered: !current } : s));
+  };
+
+  const deleteSale = async (saleId) => {
+    const { error } = await supabase.from("sales").delete().eq("id", saleId);
+    if (error) throw error;
+    await loadAll();
+  };
+
+  // Expenses
+  const addExpense = async (expData) => {
+    const { error } = await supabase.from("expenses").insert([{
+      date: expData.date,
+      category: expData.category,
+      vendor: expData.vendor,
+      amount: Number(expData.amount),
+      note: expData.note || "",
+    }]);
+    if (error) throw error;
+    await loadAll();
+  };
+
+  const deleteExpense = async (expId) => {
+    const { error } = await supabase.from("expenses").delete().eq("id", expId);
+    if (error) throw error;
+    setExpenses(prev => prev.filter(e => e.id !== expId));
+  };
+
+  // Salespeople
+  const addSalesperson = async (name) => {
+    const { error } = await supabase.from("salespeople").insert([{ name }]);
+    if (error) throw error;
+    setSalespeople(prev => [...prev, name].sort());
+  };
+
+  return { sales, expenses, salespeople, loading, error, addSale, recordPayment, toggleDelivered, deleteSale, addExpense, deleteExpense, addSalesperson, reload: loadAll };
+}
+
+// ─── UI Components ───────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, accent }) {
   return (
     <div style={{ background: "var(--card)", borderRadius: 12, padding: "14px 16px", borderLeft: `4px solid ${accent || "var(--accent)"}` }}>
@@ -95,11 +231,11 @@ function Modal({ open, onClose, title, children, wide }) {
   if (!open) return null;
   const isMobile = window.innerWidth < 640;
   return (
-    <div onClick={onClose} onKeyDown={e => e.key === "Escape" && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? 0 : 20 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? 0 : 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg)", borderRadius: isMobile ? "16px 16px 0 0" : 16, padding: isMobile ? "20px 16px" : "28px 32px", width: "100%", maxWidth: isMobile ? "100%" : wide ? 640 : 520, maxHeight: isMobile ? "92vh" : "88vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isMobile ? 16 : 22 }}>
           <h3 style={{ margin: 0, fontSize: isMobile ? 15 : 17, fontWeight: 700 }}>{title}</h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "var(--dim)", padding: "4px 8px" }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--dim)", padding: "4px 8px", lineHeight: 1 }}>×</button>
         </div>
         {children}
       </div>
@@ -112,20 +248,24 @@ function Field({ label, value, onChange, type = "text", options, placeholder, ha
   return (
     <div style={{ marginBottom: 14, flex: half ? 1 : undefined }}>
       <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--dim)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</label>
-      {options ? <select value={value} onChange={e => onChange(e.target.value)} style={{ ...base, cursor: "pointer" }}>{options.map(o => <option key={typeof o === "string" ? o : o.value} value={typeof o === "string" ? o : o.value}>{typeof o === "string" ? o : o.label}</option>)}</select>
+      {options
+        ? <select value={value} onChange={e => onChange(e.target.value)} style={{ ...base, cursor: "pointer" }}>{options.map(o => <option key={typeof o === "string" ? o : o.value} value={typeof o === "string" ? o : o.value}>{typeof o === "string" ? o : o.label}</option>)}</select>
         : <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={base} />}
     </div>
   );
 }
 
-function Btn({ children, onClick, v = "primary", s }) {
-  const styles = { primary: { background: "var(--accent)", color: "#fff", border: "none" }, ghost: { background: "transparent", color: "var(--dim)", border: "1px solid var(--line)" }, danger: { background: "transparent", color: "#D45B5B", border: "1px solid #D45B5B33" } };
-  return <button onClick={onClick} style={{ ...styles[v], padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", ...s }}>{children}</button>;
+function Btn({ children, onClick, v = "primary", s, disabled }) {
+  const styles = {
+    primary: { background: "var(--accent)", color: "#fff", border: "none" },
+    ghost: { background: "transparent", color: "var(--dim)", border: "1px solid var(--line)" },
+    danger: { background: "transparent", color: "#D45B5B", border: "1px solid #D45B5B33" },
+  };
+  return <button onClick={onClick} disabled={disabled} style={{ ...styles[v], padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: disabled ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: disabled ? 0.6 : 1, ...s }}>{children}</button>;
 }
 
 function TH({ children, right }) { return <th style={{ padding: "10px 14px", textAlign: right ? "right" : "left", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--dim)" }}>{children}</th>; }
 function TD({ children, right, mono, bold, color, style: sx }) { return <td style={{ padding: "10px 14px", textAlign: right ? "right" : "left", fontFamily: mono ? "var(--mono)" : "inherit", fontWeight: bold ? 700 : 400, color: color || "inherit", fontSize: 13, whiteSpace: "nowrap", ...sx }}>{children}</td>; }
-
 function Badge({ text, color, bg }) { return <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: bg, color }}>{text}</span>; }
 
 const hoverRow = {
@@ -143,13 +283,23 @@ function buildDeposits(sales) {
   sales.forEach(sale => {
     sale.payments.forEach(p => {
       if (!byDate[p.date]) byDate[p.date] = { visamc: 0, amex: 0, cash: 0, finance: 0, check: 0, cod: 0 };
-      const key = { "Visa/MC": "visamc", "AMEX": "amex", "Cash": "cash", "Finance": "finance", "Check": "check", "COD": "cod" }[p.method] || "cash";
+      const key = { "Visa/MC": "visamc", AMEX: "amex", Cash: "cash", Finance: "finance", Check: "check", COD: "cod" }[p.method] || "cash";
       byDate[p.date][key] += p.amount;
     });
   });
-  return Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).map(([date, vals], i) => ({ id: i, date, ...vals }));
+  return Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).map(([date, vals]) => ({ date, ...vals }));
 }
 
+function Spinner() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 60 }}>
+      <div style={{ width: 32, height: 32, border: "3px solid var(--line)", borderTop: "3px solid var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+// ─── Tabs ────────────────────────────────────────────────────────────────────
 function DashboardTab({ sales, expenses, salespeople, mobile }) {
   const totalRevenue = sales.reduce((s, x) => s + x.price, 0);
   const totalCost = sales.reduce((s, x) => s + x.cost, 0);
@@ -180,36 +330,36 @@ function DashboardTab({ sales, expenses, salespeople, mobile }) {
         <StatCard label="Collected" value={fmt(totalCollected)} sub="Payments received" accent="#5B8DEF" />
         <StatCard label="Outstanding" value={fmt(totalOwed)} sub={`${owedSales.length} customer${owedSales.length !== 1 ? "s" : ""} owe`} accent={totalOwed > 0 ? "#F59E0B" : "#2DD4A8"} />
         <StatCard label="Gross Profit" value={fmt(totalProfit)} sub={`Margin: ${pct(avgMargin)}`} accent="#8B5CF6" />
-        <StatCard label="Cash Flow" value={fmt(cashFlow)} sub="Collected − Expenses" accent={cashFlow >= 0 ? "#2DD4A8" : "#D45B5B"} />
+        <StatCard label="Cash Flow" value={fmt(cashFlow)} sub="Collected - Expenses" accent={cashFlow >= 0 ? "#2DD4A8" : "#D45B5B"} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 20 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={{ background: "var(--card)", borderRadius: 12, padding: 22 }}>
             <h3 style={{ margin: "0 0 18px", fontSize: 14, fontWeight: 700 }}>Salesperson Performance</h3>
-            {spData.map((sp, i) => (
-              <div key={sp.name} style={{ marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", fontSize: 10, fontWeight: 700, background: i === 0 ? "var(--accent)" : "var(--line)", color: i === 0 ? "#fff" : "var(--dim)" }}>{i + 1}</span>
-                    <span style={{ fontWeight: 600, fontSize: 13 }}>{sp.name}</span>
+            {spData.length === 0
+              ? <div style={{ color: "var(--dim)", fontSize: 13 }}>No sales data yet.</div>
+              : spData.map((sp, i) => (
+                <div key={sp.name} style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", fontSize: 10, fontWeight: 700, background: i === 0 ? "var(--accent)" : "var(--line)", color: i === 0 ? "#fff" : "var(--dim)" }}>{i + 1}</span>
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>{sp.name}</span>
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: 700, fontFamily: "var(--mono)", fontSize: 13 }}>{fmt(sp.revenue)}</span>
+                      <span style={{ color: "var(--dim)", fontSize: 11, marginLeft: 6 }}>{pct(sp.margin)}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span style={{ fontWeight: 700, fontFamily: "var(--mono)", fontSize: 13 }}>{fmt(sp.revenue)}</span>
-                    <span style={{ color: "var(--dim)", fontSize: 11, marginLeft: 6 }}>{pct(sp.margin)}</span>
-                  </div>
+                  <Bar value={sp.revenue} max={maxRev} color={["#2DD4A8", "#5B8DEF", "#8B5CF6", "#F59E0B"][i % 4]} />
+                  <div style={{ fontSize: 10, color: "var(--dim)", marginTop: 3 }}>{sp.count} sale{sp.count !== 1 ? "s" : ""} · {fmt(sp.profit)} profit</div>
                 </div>
-                <Bar value={sp.revenue} max={maxRev} color={["#2DD4A8","#5B8DEF","#8B5CF6","#F59E0B"][i % 4]} />
-                <div style={{ fontSize: 10, color: "var(--dim)", marginTop: 3 }}>{sp.count} sales · {fmt(sp.profit)} profit</div>
-              </div>
-            ))}
+              ))}
           </div>
 
           {owedSales.length > 0 && (
             <div style={{ background: "var(--card)", borderRadius: 12, padding: 22, borderLeft: "4px solid #F59E0B" }}>
-              <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ color: "#F59E0B" }}>⚠</span> Outstanding Balances
-              </h3>
+              <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700 }}>⚠ Outstanding Balances</h3>
               {owedSales.map(sale => {
                 const bal = saleBalance(sale);
                 const paidPct = sale.price > 0 ? (sale.price - bal) / sale.price : 0;
@@ -239,49 +389,66 @@ function DashboardTab({ sales, expenses, salespeople, mobile }) {
         <div style={{ background: "var(--card)", borderRadius: 12, padding: 22 }}>
           <h3 style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 700 }}>Expense Breakdown</h3>
           <div style={{ fontSize: 12, fontWeight: 600, color: "var(--dim)", marginBottom: 14 }}>Total: {fmt(totalExpenses)}</div>
-          {expByCat.map(cat => (
-            <div key={cat.id} style={{ marginBottom: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                <span style={{ fontWeight: 500 }}>{cat.label}</span>
-                <span style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>{fmt(cat.total)}</span>
+          {expByCat.length === 0
+            ? <div style={{ color: "var(--dim)", fontSize: 13 }}>No expenses recorded yet.</div>
+            : expByCat.map(cat => (
+              <div key={cat.id} style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                  <span style={{ fontWeight: 500 }}>{cat.label}</span>
+                  <span style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>{fmt(cat.total)}</span>
+                </div>
+                <Bar value={cat.total} max={maxExp} color={cat.color} />
               </div>
-              <Bar value={cat.total} max={maxExp} color={cat.color} />
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
   );
 }
 
-function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
+function SalesTab({ sales, addSale, recordPayment, toggleDelivered, deleteSale, salespeople, addSalesperson, mobile }) {
   const [modal, setModal] = useState(false);
   const [payModal, setPayModal] = useState(null);
   const [spModal, setSpModal] = useState(false);
   const [detailModal, setDetailModal] = useState(null);
   const [newSp, setNewSp] = useState("");
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ date: today(), customer: "", phone: "", items: "", address: "", price: "", cost: "", salesperson: salespeople[0] || "", deliveryDate: "", deliveryTime: "", initPayment: "", initMethod: "Visa/MC", initNote: "Initial deposit" });
   const [payForm, setPayForm] = useState({ date: today(), amount: "", method: "Visa/MC", note: "" });
-  const [filter, setFilter] = useState("all");
 
-  const addSale = () => {
+  useEffect(() => {
+    if (salespeople.length && !form.salesperson) setForm(f => ({ ...f, salesperson: salespeople[0] }));
+  }, [salespeople]);
+
+  const handleAddSale = async () => {
     if (!form.customer || !form.price) return;
-    const initPay = Number(form.initPayment || 0);
-    const payments = initPay > 0 ? [{ id: Date.now() + 1, date: form.date, amount: initPay, method: form.initMethod, note: form.initNote || "Initial deposit" }] : [];
-    setSales(prev => [...prev, { id: Date.now(), date: form.date, customer: form.customer, phone: form.phone, items: form.items, address: form.address, price: Number(form.price), cost: Number(form.cost || 0), salesperson: form.salesperson, deliveryDate: form.deliveryDate, deliveryTime: form.deliveryTime, delivered: false, payments }]);
-    setForm({ date: today(), customer: "", phone: "", items: "", address: "", price: "", cost: "", salesperson: salespeople[0] || "", deliveryDate: "", deliveryTime: "", initPayment: "", initMethod: "Visa/MC", initNote: "Initial deposit" });
-    setModal(false);
+    setSaving(true);
+    try {
+      await addSale(form, { amount: form.initPayment, method: form.initMethod, note: form.initNote });
+      setForm({ date: today(), customer: "", phone: "", items: "", address: "", price: "", cost: "", salesperson: salespeople[0] || "", deliveryDate: "", deliveryTime: "", initPayment: "", initMethod: "Visa/MC", initNote: "Initial deposit" });
+      setModal(false);
+    } catch (e) { alert("Error saving sale: " + e.message); }
+    setSaving(false);
   };
 
-  const recordPayment = () => {
+  const handleRecordPayment = async () => {
     if (!payForm.amount || !payModal) return;
-    setSales(prev => prev.map(s => s.id === payModal ? { ...s, payments: [...s.payments, { id: Date.now(), date: payForm.date, amount: Number(payForm.amount), method: payForm.method, note: payForm.note }] } : s));
-    setPayForm({ date: today(), amount: "", method: "Visa/MC", note: "" });
-    setPayModal(null);
+    setSaving(true);
+    try {
+      await recordPayment(payModal, payForm);
+      setPayForm({ date: today(), amount: "", method: "Visa/MC", note: "" });
+      setPayModal(null);
+    } catch (e) { alert("Error recording payment: " + e.message); }
+    setSaving(false);
   };
 
-  const toggleDelivered = (id) => setSales(prev => prev.map(s => s.id === id ? { ...s, delivered: !s.delivered } : s));
+  const handleAddSp = async () => {
+    if (!newSp.trim() || salespeople.includes(newSp.trim())) return;
+    try { await addSalesperson(newSp.trim()); setNewSp(""); setSpModal(false); }
+    catch (e) { alert("Error: " + e.message); }
+  };
 
   const filtered = useMemo(() => {
     let list = [...sales];
@@ -291,7 +458,7 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
       const q = search.toLowerCase();
       list = list.filter(s => s.customer.toLowerCase().includes(q) || s.items.toLowerCase().includes(q) || s.salesperson.toLowerCase().includes(q));
     }
-    return list.reverse();
+    return list;
   }, [sales, filter, search]);
 
   const owedCount = sales.filter(s => saleBalance(s) > 0).length;
@@ -303,16 +470,10 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
         <Btn onClick={() => setModal(true)}>+ New Sale</Btn>
         <Btn onClick={() => setSpModal(true)} v="ghost">+ Salesperson</Btn>
-        <input
-          value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..."
-          style={{ padding: "9px 13px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 13, fontFamily: "inherit", outline: "none", flex: mobile ? "1 1 100%" : "0 0 250px", minWidth: 0 }}
-        />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ padding: "9px 13px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 13, fontFamily: "inherit", outline: "none", flex: mobile ? "1 1 100%" : "0 0 250px", minWidth: 0 }} />
         <div style={{ marginLeft: mobile ? 0 : "auto", display: "flex", gap: 4, background: "var(--card)", borderRadius: 8, padding: 3, flex: mobile ? "1 1 100%" : undefined }}>
           {[["all", "All"], ["owed", `Owed (${owedCount})`], ["paid", "Paid"]].map(([k, l]) => (
-            <button key={k} onClick={() => setFilter(k)} style={{
-              padding: "6px 14px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-              background: filter === k ? "var(--accent)" : "transparent", color: filter === k ? "#fff" : "var(--dim)", flex: mobile ? 1 : undefined,
-            }}>{l}</button>
+            <button key={k} onClick={() => setFilter(k)} style={{ padding: "6px 14px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", background: filter === k ? "var(--accent)" : "transparent", color: filter === k ? "#fff" : "var(--dim)", flex: mobile ? 1 : undefined }}>{l}</button>
           ))}
         </div>
       </div>
@@ -321,7 +482,7 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
             <thead><tr style={{ borderBottom: "2px solid var(--line)" }}>
-              {["Date","Customer","Salesperson","Total","Paid","Balance","Margin","Delivery",""].map(h => <TH key={h} right={["Total","Paid","Balance","Margin"].includes(h)}>{h}</TH>)}
+              {["Date", "Customer", "Salesperson", "Total", "Paid", "Balance", "Margin", "Delivery", ""].map(h => <TH key={h} right={["Total", "Paid", "Balance", "Margin"].includes(h)}>{h}</TH>)}
             </tr></thead>
             <tbody>
               {filtered.length === 0 && (
@@ -338,17 +499,13 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
                   <tr key={s.id} onClick={() => setDetailModal(s.id)} style={{ borderBottom: "1px solid var(--line)", cursor: "pointer", transition: "background 0.15s" }} {...hoverRow}>
                     <TD mono>{s.date}</TD>
                     <TD bold>{s.customer}</TD>
-                    <TD><Badge text={s.salesperson} color="var(--accent)" bg="var(--accent-soft)" /></TD>
+                    <TD><Badge text={s.salesperson || "—"} color="var(--accent)" bg="var(--accent-soft)" /></TD>
                     <TD right mono bold>{fmt(s.price)}</TD>
                     <TD right mono color="#2DD4A8">{fmt(paid)}</TD>
                     <TD right mono bold color={bal > 0 ? "#F59E0B" : "#2DD4A8"}>{bal > 0 ? fmt(bal) : "PAID"}</TD>
                     <TD right mono>{pct(margin)}</TD>
-                    <TD>
-                      <Badge text={s.delivered ? "Delivered" : "Pending"} color={s.delivered ? "#2DD4A8" : "#F59E0B"} bg={s.delivered ? "rgba(45,212,168,0.12)" : "rgba(244,158,11,0.12)"} />
-                    </TD>
-                    <TD>
-                      {bal > 0 && <Btn v="ghost" s={{ padding: "4px 10px", fontSize: 11 }} onClick={e => { e.stopPropagation(); setPayModal(s.id); }}>Pay</Btn>}
-                    </TD>
+                    <TD><Badge text={s.delivered ? "Delivered" : "Pending"} color={s.delivered ? "#2DD4A8" : "#F59E0B"} bg={s.delivered ? "rgba(45,212,168,0.12)" : "rgba(244,158,11,0.12)"} /></TD>
+                    <TD>{bal > 0 && <Btn v="ghost" s={{ padding: "4px 10px", fontSize: 11 }} onClick={e => { e.stopPropagation(); setPayModal(s.id); }}>Pay</Btn>}</TD>
                   </tr>
                 );
               })}
@@ -365,7 +522,7 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           <Field label="Phone" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} placeholder="Phone number" half />
-          <Field label="Salesperson" value={form.salesperson} onChange={v => setForm(f => ({ ...f, salesperson: v }))} options={salespeople} half />
+          <Field label="Salesperson" value={form.salesperson} onChange={v => setForm(f => ({ ...f, salesperson: v }))} options={salespeople.length ? salespeople : [""]} half />
         </div>
         <Field label="Items" value={form.items} onChange={v => setForm(f => ({ ...f, items: v }))} placeholder="Products sold" />
         <Field label="Delivery Address" value={form.address} onChange={v => setForm(f => ({ ...f, address: v }))} placeholder="Full address" />
@@ -387,7 +544,7 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
           <Btn v="ghost" onClick={() => setModal(false)}>Cancel</Btn>
-          <Btn onClick={addSale}>Save Sale</Btn>
+          <Btn onClick={handleAddSale} disabled={saving}>{saving ? "Saving…" : "Save Sale"}</Btn>
         </div>
       </Modal>
 
@@ -396,9 +553,7 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
         {paySale && (
           <div style={{ background: "var(--card)", borderRadius: 8, padding: 14, marginBottom: 18 }}>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{paySale.customer}</div>
-            <div style={{ fontSize: 12, color: "var(--dim)", marginTop: 4 }}>
-              Balance due: <span style={{ color: "#F59E0B", fontWeight: 700, fontFamily: "var(--mono)" }}>{fmt(saleBalance(paySale))}</span>
-            </div>
+            <div style={{ fontSize: 12, color: "var(--dim)", marginTop: 4 }}>Balance due: <span style={{ color: "#F59E0B", fontWeight: 700, fontFamily: "var(--mono)" }}>{fmt(saleBalance(paySale))}</span></div>
           </div>
         )}
         <div style={{ display: "flex", gap: 12 }}>
@@ -409,7 +564,7 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
         <Field label="Note" value={payForm.note} onChange={v => setPayForm(f => ({ ...f, note: v }))} placeholder="Payment note" />
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
           <Btn v="ghost" onClick={() => setPayModal(null)}>Cancel</Btn>
-          <Btn onClick={recordPayment}>Record Payment</Btn>
+          <Btn onClick={handleRecordPayment} disabled={saving}>{saving ? "Saving…" : "Record Payment"}</Btn>
         </div>
       </Modal>
 
@@ -418,12 +573,7 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
         <Field label="Name" value={newSp} onChange={setNewSp} placeholder="Salesperson name" />
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
           <Btn v="ghost" onClick={() => setSpModal(false)}>Cancel</Btn>
-          <Btn onClick={() => {
-            if (!newSp.trim() || salespeople.includes(newSp.trim())) return;
-            setSalespeople(prev => [...prev, newSp.trim()]);
-            setNewSp("");
-            setSpModal(false);
-          }}>Add</Btn>
+          <Btn onClick={handleAddSp}>Add</Btn>
         </div>
       </Modal>
 
@@ -450,34 +600,22 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 640 ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
-                <div style={{ background: "var(--card)", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                  <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase" }}>Total</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--mono)" }}>{fmt(detailSale.price)}</div>
-                </div>
-                <div style={{ background: "var(--card)", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                  <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase" }}>Paid</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--mono)", color: "#2DD4A8" }}>{fmt(paid)}</div>
-                </div>
-                <div style={{ background: "var(--card)", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                  <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase" }}>Balance</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--mono)", color: bal > 0 ? "#F59E0B" : "#2DD4A8" }}>{bal > 0 ? fmt(bal) : "PAID"}</div>
-                </div>
-                <div style={{ background: "var(--card)", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                  <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase" }}>Margin</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--mono)" }}>{pct(detailSale.price > 0 ? (detailSale.price - detailSale.cost) / detailSale.price : 0)}</div>
-                </div>
+                {[["Total", fmt(detailSale.price), null], ["Paid", fmt(paid), "#2DD4A8"], ["Balance", bal > 0 ? fmt(bal) : "PAID", bal > 0 ? "#F59E0B" : "#2DD4A8"], ["Margin", pct(detailSale.price > 0 ? (detailSale.price - detailSale.cost) / detailSale.price : 0), null]].map(([label, value, color]) => (
+                  <div key={label} style={{ background: "var(--card)", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--mono)", color: color || "inherit" }}>{value}</div>
+                  </div>
+                ))}
               </div>
 
               {detailSale.payments.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontSize: 11, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase", marginBottom: 8 }}>Payment History</div>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
-                      {["Date","Amount","Method","Note"].map(h => <TH key={h} right={h === "Amount"}>{h}</TH>)}
-                    </tr></thead>
+                    <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>{["Date", "Amount", "Method", "Note"].map(h => <TH key={h} right={h === "Amount"}>{h}</TH>)}</tr></thead>
                     <tbody>
-                      {detailSale.payments.map(p => (
-                        <tr key={p.id} style={{ borderBottom: "1px solid var(--line)" }}>
+                      {detailSale.payments.map((p, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid var(--line)" }}>
                           <TD mono>{p.date}</TD>
                           <TD right mono bold color="#2DD4A8">{fmt(p.amount)}</TD>
                           <TD>{p.method}</TD>
@@ -489,11 +627,14 @@ function SalesTab({ sales, setSales, salespeople, setSalespeople, mobile }) {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <Btn v={detailSale.delivered ? "danger" : "ghost"} onClick={() => toggleDelivered(detailSale.id)}>
-                  {detailSale.delivered ? "Mark Undelivered" : "Mark Delivered"}
-                </Btn>
-                {bal > 0 && <Btn onClick={() => { setDetailModal(null); setPayModal(detailSale.id); }}>Record Payment</Btn>}
+              <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
+                <Btn v="danger" onClick={async () => { if (confirm("Delete this sale and all its payments?")) { await deleteSale(detailSale.id); setDetailModal(null); } }}>Delete Sale</Btn>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <Btn v={detailSale.delivered ? "danger" : "ghost"} onClick={() => toggleDelivered(detailSale.id, detailSale.delivered)}>
+                    {detailSale.delivered ? "Mark Undelivered" : "Mark Delivered"}
+                  </Btn>
+                  {bal > 0 && <Btn onClick={() => { setDetailModal(null); setPayModal(detailSale.id); }}>Record Payment</Btn>}
+                </div>
               </div>
             </>
           );
@@ -509,46 +650,45 @@ function DepositsTab({ sales }) {
     <div style={{ background: "var(--card)", borderRadius: 12, overflow: "hidden" }}>
       <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, padding: "18px 22px 0" }}>Daily Deposits</h3>
       <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
-        <thead><tr style={{ borderBottom: "2px solid var(--line)" }}>
-          {["Date","Visa/MC","AMEX","Cash","Finance","Check","COD","Total"].map(h => <TH key={h} right={h !== "Date"}>{h}</TH>)}
-        </tr></thead>
-        <tbody>
-          {deposits.length === 0 && (
-            <tr><td colSpan={8} style={{ padding: "48px 20px", textAlign: "center", color: "var(--dim)", fontSize: 13 }}>
-              No deposits yet. Deposits are generated automatically from sale payments.
-            </td></tr>
-          )}
-          {[...deposits].reverse().map(d => {
-            const total = d.visamc + d.amex + d.cash + d.finance + d.check + d.cod;
-            return (
-              <tr key={d.date} style={{ borderBottom: "1px solid var(--line)", transition: "background 0.15s" }} {...hoverRow}>
-                <TD mono>{d.date}</TD>
-                {[d.visamc, d.amex, d.cash, d.finance, d.check, d.cod].map((v, i) => (
-                  <TD key={i} right mono>{fmt(v)}</TD>
-                ))}
-                <TD right mono bold color="var(--accent)">{fmt(total)}</TD>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+          <thead><tr style={{ borderBottom: "2px solid var(--line)" }}>{["Date", "Visa/MC", "AMEX", "Cash", "Finance", "Check", "COD", "Total"].map(h => <TH key={h} right={h !== "Date"}>{h}</TH>)}</tr></thead>
+          <tbody>
+            {deposits.length === 0 && (
+              <tr><td colSpan={8} style={{ padding: "48px 20px", textAlign: "center", color: "var(--dim)", fontSize: 13 }}>No deposits yet. Deposits are generated from sale payments.</td></tr>
+            )}
+            {[...deposits].reverse().map(d => {
+              const total = d.visamc + d.amex + d.cash + d.finance + d.check + d.cod;
+              return (
+                <tr key={d.date} style={{ borderBottom: "1px solid var(--line)", transition: "background 0.15s" }} {...hoverRow}>
+                  <TD mono>{d.date}</TD>
+                  {[d.visamc, d.amex, d.cash, d.finance, d.check, d.cod].map((v, i) => <TD key={i} right mono>{fmt(v)}</TD>)}
+                  <TD right mono bold color="var(--accent)">{fmt(total)}</TD>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-function ExpensesTab({ expenses, setExpenses }) {
+function ExpensesTab({ expenses, addExpense, deleteExpense }) {
   const [modal, setModal] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ date: today(), category: EXPENSE_CATS[0].id, vendor: "", amount: "", note: "" });
   const total = expenses.reduce((s, e) => s + e.amount, 0);
   const catLookup = Object.fromEntries(EXPENSE_CATS.map(c => [c.id, c]));
 
-  const addExpense = () => {
+  const handleAdd = async () => {
     if (!form.vendor || !form.amount) return;
-    setExpenses(prev => [...prev, { id: Date.now(), date: form.date, category: form.category, vendor: form.vendor, amount: Number(form.amount), note: form.note }]);
-    setForm({ date: today(), category: EXPENSE_CATS[0].id, vendor: "", amount: "", note: "" });
-    setModal(false);
+    setSaving(true);
+    try {
+      await addExpense(form);
+      setForm({ date: today(), category: EXPENSE_CATS[0].id, vendor: "", amount: "", note: "" });
+      setModal(false);
+    } catch (e) { alert("Error: " + e.message); }
+    setSaving(false);
   };
 
   return (
@@ -561,30 +701,27 @@ function ExpensesTab({ expenses, setExpenses }) {
         <Btn onClick={() => setModal(true)}>+ New Expense</Btn>
       </div>
       <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
-        <thead><tr style={{ borderBottom: "2px solid var(--line)" }}>
-          {["Date","Category","Vendor","Amount","Note"].map(h => <TH key={h} right={h === "Amount"}>{h}</TH>)}
-        </tr></thead>
-        <tbody>
-          {expenses.length === 0 && (
-            <tr><td colSpan={5} style={{ padding: "48px 20px", textAlign: "center", color: "var(--dim)", fontSize: 13 }}>
-              No expenses recorded. Click "+ New Expense" to add one.
-            </td></tr>
-          )}
-          {[...expenses].reverse().map(e => {
-            const cat = catLookup[e.category];
-            return (
-              <tr key={e.id} style={{ borderBottom: "1px solid var(--line)", transition: "background 0.15s" }} {...hoverRow}>
-                <TD mono>{e.date}</TD>
-                <TD>{cat?.label || e.category}</TD>
-                <TD bold>{e.vendor}</TD>
-                <TD right mono bold color="#D45B5B">{fmt(e.amount)}</TD>
-                <TD color="var(--dim)">{e.note}</TD>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+          <thead><tr style={{ borderBottom: "2px solid var(--line)" }}>{["Date", "Category", "Vendor", "Amount", "Note", ""].map(h => <TH key={h} right={h === "Amount"}>{h}</TH>)}</tr></thead>
+          <tbody>
+            {expenses.length === 0 && (
+              <tr><td colSpan={6} style={{ padding: "48px 20px", textAlign: "center", color: "var(--dim)", fontSize: 13 }}>No expenses recorded. Click "+ New Expense" to add one.</td></tr>
+            )}
+            {expenses.map(e => {
+              const cat = catLookup[e.category];
+              return (
+                <tr key={e.id} style={{ borderBottom: "1px solid var(--line)", transition: "background 0.15s" }} {...hoverRow}>
+                  <TD mono>{e.date}</TD>
+                  <TD>{cat?.label || e.category}</TD>
+                  <TD bold>{e.vendor}</TD>
+                  <TD right mono bold color="#D45B5B">{fmt(e.amount)}</TD>
+                  <TD color="var(--dim)">{e.note}</TD>
+                  <TD><Btn v="danger" s={{ padding: "3px 10px", fontSize: 11 }} onClick={() => { if (confirm("Delete this expense?")) deleteExpense(e.id); }}>×</Btn></TD>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       <Modal open={modal} onClose={() => setModal(false)} title="New Expense">
@@ -599,30 +736,32 @@ function ExpensesTab({ expenses, setExpenses }) {
         <Field label="Note" value={form.note} onChange={v => setForm(f => ({ ...f, note: v }))} placeholder="Description" />
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
           <Btn v="ghost" onClick={() => setModal(false)}>Cancel</Btn>
-          <Btn onClick={addExpense}>Save Expense</Btn>
+          <Btn onClick={handleAdd} disabled={saving}>{saving ? "Saving…" : "Save Expense"}</Btn>
         </div>
       </Modal>
     </div>
   );
 }
 
+// ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
+  const { authed, login, logout } = useAuth();
   const [tab, setTab] = useState("dashboard");
-  const [sales, setSales] = useState(sampleSales);
-  const [expenses, setExpenses] = useState(sampleExpenses);
-  const [salespeople, setSalespeople] = useState(initialSalespeople);
+  const { sales, expenses, salespeople, loading, error, addSale, recordPayment, toggleDelivered, deleteSale, addExpense, deleteExpense, addSalesperson, reload } = useData();
   const w = useWidth();
   const mobile = w < 640;
   const tablet = w < 900;
 
   const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: "◩" },
-    { id: "sales", label: "Sales", icon: "⊕" },
-    { id: "deposits", label: "Deposits", icon: "↓" },
-    { id: "expenses", label: "Expenses", icon: "↑" },
+    { id: "dashboard", label: "Dashboard", icon: "📊" },
+    { id: "sales", label: "Sales", icon: "🛏" },
+    { id: "deposits", label: "Deposits", icon: "🏦" },
+    { id: "expenses", label: "Expenses", icon: "💸" },
   ];
 
   const owedCount = sales.filter(s => saleBalance(s) > 0).length;
+
+  if (!authed) return <LockScreen onLogin={login} />;
 
   return (
     <div style={{
@@ -659,7 +798,10 @@ export default function App() {
           ))}
         </div>
 
-        {!mobile && <div style={{ fontSize: 11, color: "var(--dim)", fontFamily: "var(--mono)", flexShrink: 0 }}>March 2026</div>}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {!mobile && <button onClick={reload} title="Refresh" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--dim)", fontSize: 16, padding: "4px 8px" }}>↻</button>}
+          <button onClick={logout} style={{ background: "none", border: "1px solid var(--line)", borderRadius: 6, cursor: "pointer", color: "var(--dim)", fontSize: 11, fontWeight: 600, padding: "4px 10px", fontFamily: "inherit" }}>Lock</button>
+        </div>
       </div>
 
       {/* Content */}
@@ -674,10 +816,16 @@ export default function App() {
           </p>
         </div>
 
-        {tab === "dashboard" && <DashboardTab sales={sales} expenses={expenses} salespeople={salespeople} mobile={tablet} />}
-        {tab === "sales" && <SalesTab sales={sales} setSales={setSales} salespeople={salespeople} setSalespeople={setSalespeople} mobile={mobile} />}
-        {tab === "deposits" && <DepositsTab sales={sales} />}
-        {tab === "expenses" && <ExpensesTab expenses={expenses} setExpenses={setExpenses} />}
+        {error && <div style={{ background: "#D45B5B22", border: "1px solid #D45B5B44", borderRadius: 10, padding: "14px 18px", marginBottom: 20, color: "#D45B5B", fontSize: 13 }}>⚠ {error} — <button onClick={reload} style={{ background: "none", border: "none", color: "#5B8DEF", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Retry</button></div>}
+
+        {loading ? <Spinner /> : (
+          <>
+            {tab === "dashboard" && <DashboardTab sales={sales} expenses={expenses} salespeople={salespeople} mobile={tablet} />}
+            {tab === "sales" && <SalesTab sales={sales} addSale={addSale} recordPayment={recordPayment} toggleDelivered={toggleDelivered} deleteSale={deleteSale} salespeople={salespeople} addSalesperson={addSalesperson} mobile={mobile} />}
+            {tab === "deposits" && <DepositsTab sales={sales} />}
+            {tab === "expenses" && <ExpensesTab expenses={expenses} addExpense={addExpense} deleteExpense={deleteExpense} />}
+          </>
+        )}
       </div>
     </div>
   );
