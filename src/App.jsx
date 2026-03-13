@@ -279,7 +279,7 @@ function DashboardTab({ sales, expenses, salespeople, mobile, settings }) {
 }
 
 // ─── Sales Tab ────────────────────────────────────────────────────────────────
-function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPayment, deletePayment, toggleDelivered, salespeople, addSalesperson, mobile, bounds, settings, products }) {
+function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPayment, deletePayment, toggleDelivered, salespeople, addSalesperson, mobile, bounds, settings, products, vendors }) {
   const [addModal, setAddModal]           = useState(false);
   const [editModal, setEditModal]         = useState(null);
   const [payModal, setPayModal]           = useState(null);
@@ -299,8 +299,9 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
 
   useEffect(() => { if (salespeople.length && !addForm.salesperson) setAddForm(f => ({ ...f, salesperson: salespeople[0] })); }, [salespeople]);
 
-  // Build flat variant catalog
+  // Build flat variant catalog and lookup map
   const catalog = useMemo(() => products.flatMap(p => p.variants.map(v => ({ id: v.id, productName: p.name, size: v.size, cost: v.cost, retailPrice: v.retailPrice, quantityOnHand: v.quantityOnHand }))), [products]);
+  const variantMap = useMemo(() => Object.fromEntries(catalog.map(v => [v.id, v])), [catalog]);
 
   const handleAddSale = async () => {
     if (!addForm.customer) return;
@@ -392,7 +393,17 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
                       <span onClick={e => { e.stopPropagation(); setCustomerModal(s.customer); }} style={{ cursor: "pointer", borderBottom: "1px dashed var(--dim)" }}>{s.customer}</span>
                       {s.cancelledAt && <Badge text="Cancelled" color="#6B7084" bg="rgba(107,112,132,0.15)" />}
                     </TD>
-                    <TD style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", color: "var(--dim)", fontSize: 12 }}>{s.items || "—"}</TD>
+                    <TD style={{ maxWidth: 260 }}>
+                      <div style={{ fontSize: 12, color: "var(--dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.items || "—"}</div>
+                      {s.saleItems?.filter(si => si.variantId).map(si => {
+                        const v = variantMap[si.variantId];
+                        if (!v) return null;
+                        const qty = v.quantityOnHand;
+                        const color = qty <= 0 ? "#D45B5B" : qty <= 2 ? "#F59E0B" : "#2DD4A8";
+                        const label = qty <= 0 ? "Out of Stock" : qty <= 2 ? "Low Stock" : "In Stock";
+                        return <span key={si.id} style={{ fontSize: 10, fontWeight: 600, color, marginRight: 6, whiteSpace: "nowrap" }}>● {v.productName} {v.size}: {label}</span>;
+                      })}
+                    </TD>
                     <TD><Badge text={s.salesperson || "—"} color="var(--accent)" bg="var(--accent-soft)" /></TD>
                     <TD right mono bold>{fmt(s.price)}</TD>
                     <TD right mono color="#2DD4A8">{fmt(paid)}</TD>
@@ -412,7 +423,7 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
       <Modal open={addModal} onClose={() => setAddModal(false)} title="New Sale" wide>
         <SaleFormFields form={addForm} setForm={setAddForm} salespeople={salespeople} />
         <div style={{ borderTop: "1px solid var(--line)", marginTop: 4, paddingTop: 16 }}>
-          <LineItemBuilder items={lineItems} setItems={setLineItems} catalog={catalog} />
+          <LineItemBuilder items={lineItems} setItems={setLineItems} catalog={catalog} vendors={vendors} />
           {!lineItems.length && (
             <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
               <Field label="Total Price (if no line items)" value={addForm.price} onChange={v => setAddForm(f => ({ ...f, price: v }))} type="number" placeholder="0.00" half />
@@ -801,7 +812,7 @@ export default function App() {
         {loading ? <Spinner /> : (
           <>
             {tab === "dashboard" && <DashboardTab sales={filteredSales} expenses={filteredExpenses} salespeople={salespeople} mobile={tablet} settings={settings} />}
-            {tab === "sales"     && <SalesTab {...data} salespeople={salespeople} mobile={mobile} bounds={bounds} settings={settings} products={products} />}
+            {tab === "sales"     && <SalesTab {...data} salespeople={salespeople} mobile={mobile} bounds={bounds} settings={settings} products={products} vendors={vendors} />}
             {tab === "deposits"  && <DepositsTab sales={sales} bounds={bounds} />}
             {tab === "expenses"  && <ExpensesTab expenses={expenses} addExpense={data.addExpense} deleteExpense={data.deleteExpense} bounds={bounds} />}
             {tab === "inventory" && <InventoryTab products={products} vendors={vendors} addProduct={data.addProduct} editProduct={data.editProduct} deleteProduct={data.deleteProduct} addVariant={data.addVariant} editVariant={data.editVariant} deleteVariant={data.deleteVariant} adjustInventory={data.adjustInventory} />}

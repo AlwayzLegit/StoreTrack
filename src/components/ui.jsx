@@ -103,8 +103,8 @@ export function ReasonModal({ open, onClose, onConfirm, title, placeholder, conf
 }
 
 // Line item builder for sales / vendor purchases
-export function LineItemBuilder({ items, setItems, catalog, catalogLabel = "Product" }) {
-  const blankItem = () => ({ _id: Date.now(), variantId: null, description: "", qty: 1, price: 0, cost: 0, isCustom: false });
+export function LineItemBuilder({ items, setItems, catalog, catalogLabel = "Product", vendors = [] }) {
+  const blankItem = () => ({ _id: Date.now(), variantId: null, vendorId: null, description: "", qty: 1, price: 0, cost: 0, isCustom: false });
 
   const update = (id, field, val) => setItems(prev => prev.map(i => i._id === id ? { ...i, [field]: val } : i));
 
@@ -136,7 +136,7 @@ export function LineItemBuilder({ items, setItems, catalog, catalogLabel = "Prod
             </select>
             <button onClick={() => setItems(prev => prev.filter(i => i._id !== item._id))} style={{ background: "none", border: "none", color: "#D45B5B", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>×</button>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: item.isCustom && vendors.length > 0 ? 8 : 0 }}>
             <div style={{ flex: 3 }}>
               <input value={item.description} onChange={e => update(item._id, "description", e.target.value)} placeholder="Description" style={{ width: "100%", padding: "7px 10px", borderRadius: 7, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
             </div>
@@ -150,6 +150,18 @@ export function LineItemBuilder({ items, setItems, catalog, catalogLabel = "Prod
               <input type="number" value={item.cost} onChange={e => update(item._id, "cost", parseFloat(e.target.value) || 0)} placeholder="Cost" step="0.01" style={{ width: "100%", padding: "7px 10px", borderRadius: 7, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
             </div>
           </div>
+          {item.isCustom && vendors.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 11, color: "var(--dim)", fontWeight: 600, whiteSpace: "nowrap" }}>Vendor:</span>
+              <select
+                value={item.vendorId || ""}
+                onChange={e => update(item._id, "vendorId", e.target.value || null)}
+                style={{ flex: 1, padding: "6px 10px", borderRadius: 7, border: "1px solid var(--line)", background: "var(--bg)", color: item.vendorId ? "var(--text)" : "var(--dim)", fontSize: 12, fontFamily: "inherit", outline: "none" }}>
+                <option value="">— No vendor —</option>
+                {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+            </div>
+          )}
           <div style={{ fontSize: 10, color: "var(--dim)", marginTop: 5, textAlign: "right" }}>
             Subtotal: <span style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>${(item.qty * item.price).toFixed(2)}</span>
           </div>

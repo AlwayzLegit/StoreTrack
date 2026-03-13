@@ -63,7 +63,7 @@ export function useData() {
       const saleItemMap = {};
       (saleItemRows || []).forEach(si => {
         if (!saleItemMap[si.sale_id]) saleItemMap[si.sale_id] = [];
-        saleItemMap[si.sale_id].push({ id: si.id, variantId: si.variant_id, description: si.description, quantity: si.quantity, priceAtSale: Number(si.price_at_sale), costAtSale: Number(si.cost_at_sale) });
+        saleItemMap[si.sale_id].push({ id: si.id, variantId: si.variant_id, vendorId: si.vendor_id || null, description: si.description, quantity: si.quantity, priceAtSale: Number(si.price_at_sale), costAtSale: Number(si.cost_at_sale) });
       });
 
       setSales((saleRows || []).map(s => ({
@@ -132,6 +132,7 @@ export function useData() {
     if (lineItems?.length) {
       const saleItemInserts = lineItems.map(i => ({
         sale_id: sale.id, variant_id: i.variantId || null,
+        vendor_id: i.vendorId || null,
         description: i.description, quantity: i.qty,
         price_at_sale: i.price, cost_at_sale: i.cost,
       }));
