@@ -13,18 +13,22 @@ function LockScreen({ onLogin }) {
   const [pw, setPw] = useState(""); const [err, setErr] = useState(false);
   const submit = (e) => { e.preventDefault(); if (!onLogin(pw)) { setErr(true); setPw(""); setTimeout(() => setErr(false), 1500); } };
   return (
-    <div style={{ minHeight: "100vh", background: "#0F1118", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
-      <div style={{ background: "#181B25", borderRadius: 16, padding: "40px 36px", width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.5)", textAlign: "center" }}>
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: "linear-gradient(135deg, #5B8DEF, #8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 auto 20px" }}>S</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#E8E9ED", marginBottom: 4 }}>StorTrack</div>
-        <div style={{ fontSize: 12, color: "#6B7084", marginBottom: 28 }}>Enter your password to continue</div>
-        <form onSubmit={submit}>
-          <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Password" autoFocus
-            style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${err ? "#D45B5B" : "#252836"}`, background: "#0F1118", color: "#E8E9ED", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
-          {err && <div style={{ color: "#D45B5B", fontSize: 12, marginBottom: 10 }}>Incorrect password</div>}
-          <button type="submit" style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: "#5B8DEF", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Unlock</button>
-        </form>
+    <div style={{ minHeight: "100vh", background: "#090B11", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', system-ui, sans-serif", padding: 20 }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #5B8DEF 0%, #8B65F0 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", margin: "0 auto 16px", boxShadow: "0 8px 32px rgba(91,141,239,0.4)" }}>S</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#E2E5F0", letterSpacing: "-0.02em" }}>StorTrack</div>
+          <div style={{ fontSize: 13, color: "#545870", marginTop: 6 }}>Enter your password to continue</div>
+        </div>
+        <div style={{ background: "#111318", borderRadius: 18, padding: "32px 28px", border: "1px solid #1C1F2E", boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}>
+          <form onSubmit={submit}>
+            <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Password" autoFocus
+              style={{ width: "100%", padding: "13px 16px", borderRadius: 11, border: `1.5px solid ${err ? "#E05555" : "#1C1F2E"}`, background: "#090B11", color: "#E2E5F0", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 12, transition: "border-color 0.15s" }} />
+            {err && <div style={{ color: "#E05555", fontSize: 12, marginBottom: 12, textAlign: "center" }}>Incorrect password. Try again.</div>}
+            <button type="submit" style={{ width: "100%", padding: "13px", borderRadius: 11, border: "none", background: "linear-gradient(135deg, #5B8DEF, #7B65F0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(91,141,239,0.35)", transition: "all 0.15s" }}>Unlock</button>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -41,19 +45,19 @@ function useWidth() {
 function DateRangeBar({ range, setRange, mobile }) {
   const presets = [["all","All Time"],["thisMonth","This Month"],["lastMonth","Last Month"],["custom","Custom"]];
   return (
-    <div style={{ background: "var(--card)", borderBottom: "1px solid var(--line)", padding: mobile ? "8px 12px" : "8px 28px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--dim)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Period:</span>
-      <div style={{ display: "flex", gap: 3, background: "var(--bg)", borderRadius: 8, padding: 3 }}>
+    <div style={{ background: "rgba(9,11,17,0.9)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", borderBottom: "1px solid var(--line)", padding: mobile ? "8px 12px" : "8px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--dim)", textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>Period</span>
+      <div style={{ display: "flex", gap: 2, background: "var(--card)", borderRadius: 10, padding: "3px" }}>
         {presets.map(([k, l]) => (
           <button key={k} onClick={() => setRange(r => ({ ...r, preset: k }))}
-            style={{ padding: "5px 12px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", background: range.preset === k ? "var(--accent)" : "transparent", color: range.preset === k ? "#fff" : "var(--dim)" }}>{l}</button>
+            style={{ padding: "5px 13px", borderRadius: 7, border: range.preset === k ? "1px solid rgba(91,141,239,0.3)" : "1px solid transparent", fontSize: 11, fontWeight: range.preset === k ? 700 : 500, cursor: "pointer", fontFamily: "inherit", background: range.preset === k ? "var(--accent-soft)" : "transparent", color: range.preset === k ? "var(--accent)" : "var(--dim)", transition: "all 0.15s" }}>{l}</button>
         ))}
       </div>
       {range.preset === "custom" && (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <input type="date" value={range.from} onChange={e => setRange(r => ({ ...r, from: e.target.value }))} style={{ padding: "5px 10px", borderRadius: 7, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: 12, fontFamily: "inherit", outline: "none" }} />
+          <input type="date" value={range.from} onChange={e => setRange(r => ({ ...r, from: e.target.value }))} style={{ padding: "5px 10px", borderRadius: 8, border: "1.5px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12, fontFamily: "inherit", outline: "none" }} />
           <span style={{ color: "var(--dim)", fontSize: 12 }}>→</span>
-          <input type="date" value={range.to} onChange={e => setRange(r => ({ ...r, to: e.target.value }))} style={{ padding: "5px 10px", borderRadius: 7, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: 12, fontFamily: "inherit", outline: "none" }} />
+          <input type="date" value={range.to} onChange={e => setRange(r => ({ ...r, to: e.target.value }))} style={{ padding: "5px 10px", borderRadius: 8, border: "1.5px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12, fontFamily: "inherit", outline: "none" }} />
         </div>
       )}
       {range.preset !== "all" && (() => { const b = getDateBounds(range.preset, range.from, range.to); if (b.from) return <span style={{ fontSize: 11, color: "var(--dim)", fontFamily: "var(--mono)" }}>{b.from} → {b.to || today()}</span>; })()}
@@ -104,7 +108,7 @@ function CustomerHistoryModal({ open, onClose, customer, sales }) {
   return (
     <Modal open={open} onClose={onClose} title={`${customer} — History`} wide>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 20 }}>
-        {[["Purchases", fmt(totalRev), "#2DD4A8"], ["Paid", fmt(totalPaid), "#5B8DEF"], ["Outstanding", fmt(totalBal), totalBal > 0 ? "#F59E0B" : "#2DD4A8"]].map(([l, v, c]) => (
+        {[["Purchases", fmt(totalRev), "#22D3A5"], ["Paid", fmt(totalPaid), "#5B8DEF"], ["Outstanding", fmt(totalBal), totalBal > 0 ? "#F0A429" : "#22D3A5"]].map(([l, v, c]) => (
           <div key={l} style={{ background: "var(--card)", borderRadius: 8, padding: "12px 14px", textAlign: "center" }}>
             <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase" }}>{l}</div>
             <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "var(--mono)", color: c, marginTop: 3 }}>{v}</div>
@@ -123,9 +127,9 @@ function CustomerHistoryModal({ open, onClose, customer, sales }) {
                   <TD mono>{s.date}</TD>
                   <TD style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>{s.items}</TD>
                   <TD right mono bold>{fmt(s.price)}</TD>
-                  <TD right mono color="#2DD4A8">{fmt(paid)}</TD>
-                  <TD right mono bold color={bal > 0 ? "#F59E0B" : "#2DD4A8"}>{bal > 0 ? fmt(bal) : "PAID"}</TD>
-                  <TD><Badge text={s.delivered ? "Delivered" : "Pending"} color={s.delivered ? "#2DD4A8" : "#F59E0B"} bg={s.delivered ? "rgba(45,212,168,0.12)" : "rgba(244,158,11,0.12)"} /></TD>
+                  <TD right mono color="#22D3A5">{fmt(paid)}</TD>
+                  <TD right mono bold color={bal > 0 ? "#F0A429" : "#22D3A5"}>{bal > 0 ? fmt(bal) : "PAID"}</TD>
+                  <TD><Badge text={s.delivered ? "Delivered" : "Pending"} color={s.delivered ? "#22D3A5" : "#F0A429"} bg={s.delivered ? "rgba(45,212,168,0.12)" : "rgba(244,158,11,0.12)"} /></TD>
                 </tr>
               );
             })}
@@ -188,20 +192,20 @@ function DashboardTab({ sales, expenses, salespeople, mobile, settings }) {
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: 14, marginBottom: 28 }}>
-        <StatCard label="Total Revenue" value={fmt(totalRevenue)} sub={`${sales.length} sales`} accent="#2DD4A8" />
+        <StatCard label="Total Revenue" value={fmt(totalRevenue)} sub={`${sales.length} sales`} accent="#22D3A5" />
         <StatCard label="Collected" value={fmt(totalCollected)} sub="Payments received" accent="#5B8DEF" />
-        <StatCard label="Outstanding" value={fmt(totalOwed)} sub={`${owedSales.length} customer${owedSales.length !== 1 ? "s" : ""} owe`} accent={totalOwed > 0 ? "#F59E0B" : "#2DD4A8"} />
-        <StatCard label="Gross Profit" value={fmt(totalProfit)} sub={`Margin: ${pct(avgMargin)}`} accent="#8B5CF6" />
-        <StatCard label="Cash Flow" value={fmt(cashFlow)} sub="Collected - Expenses" accent={cashFlow >= 0 ? "#2DD4A8" : "#D45B5B"} />
+        <StatCard label="Outstanding" value={fmt(totalOwed)} sub={`${owedSales.length} customer${owedSales.length !== 1 ? "s" : ""} owe`} accent={totalOwed > 0 ? "#F0A429" : "#22D3A5"} />
+        <StatCard label="Gross Profit" value={fmt(totalProfit)} sub={`Margin: ${pct(avgMargin)}`} accent="#8B65F0" />
+        <StatCard label="Cash Flow" value={fmt(cashFlow)} sub="Collected - Expenses" accent={cashFlow >= 0 ? "#22D3A5" : "#E05555"} />
       </div>
 
       {overdueSales.length > 0 && (
-        <div style={{ background: "#D45B5B15", border: "1px solid #D45B5B33", borderRadius: 12, padding: "14px 18px", marginBottom: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#D45B5B", marginBottom: 10 }}>🚨 {overdueSales.length} Overdue (&gt;{settings.overdueDays} days)</div>
+        <div style={{ background: "rgba(224,85,85,0.07)", border: "1px solid rgba(224,85,85,0.2)", borderRadius: 14, padding: "16px 20px", marginBottom: 24 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#E05555", marginBottom: 10 }}>🚨 {overdueSales.length} Overdue (&gt;{settings.overdueDays} days)</div>
           {overdueSales.map(s => (
             <div key={s.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
               <span><span style={{ fontWeight: 600 }}>{s.customer}</span><span style={{ color: "var(--dim)", marginLeft: 8, fontSize: 11 }}>{daysSince(s.date)} days ago</span></span>
-              <span style={{ fontFamily: "var(--mono)", fontWeight: 700, color: "#D45B5B" }}>{fmt(saleBalance(s))}</span>
+              <span style={{ fontFamily: "var(--mono)", fontWeight: 700, color: "#E05555" }}>{fmt(saleBalance(s))}</span>
             </div>
           ))}
         </div>
@@ -225,16 +229,16 @@ function DashboardTab({ sales, expenses, salespeople, mobile, settings }) {
                       <span style={{ color: "var(--dim)", fontSize: 11, marginLeft: 6 }}>{pct(sp.margin)}</span>
                     </div>
                   </div>
-                  <Bar value={sp.revenue} max={maxRev} color={["#2DD4A8","#5B8DEF","#8B5CF6","#F59E0B"][i % 4]} />
+                  <Bar value={sp.revenue} max={maxRev} color={["#22D3A5","#5B8DEF","#8B65F0","#F0A429"][i % 4]} />
                   <div style={{ fontSize: 10, color: "var(--dim)", marginTop: 3 }}>
                     {sp.count} sale{sp.count !== 1 ? "s" : ""} · {fmt(sp.profit)} profit
-                    {settings.commissions[sp.name] ? <span style={{ color: "#2DD4A8", marginLeft: 8 }}>Commission: {fmt(sp.revenue * settings.commissions[sp.name] / 100)}</span> : ""}
+                    {settings.commissions[sp.name] ? <span style={{ color: "#22D3A5", marginLeft: 8 }}>Commission: {fmt(sp.revenue * settings.commissions[sp.name] / 100)}</span> : ""}
                   </div>
                 </div>
               ))}
           </div>
           {owedSales.length > 0 && (
-            <div style={{ background: "var(--card)", borderRadius: 12, padding: 22, borderLeft: "4px solid #F59E0B" }}>
+            <div style={{ background: "var(--card)", borderRadius: 12, padding: 22, borderLeft: "4px solid #F0A429" }}>
               <h3 style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 700 }}>⚠ Outstanding Balances</h3>
               {owedSales.map(sale => {
                 const bal = saleBalance(sale); const paidPct = sale.price > 0 ? (sale.price - bal) / sale.price : 0;
@@ -244,12 +248,12 @@ function DashboardTab({ sales, expenses, salespeople, mobile, settings }) {
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, flexWrap: "wrap", gap: 4 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ fontWeight: 600, fontSize: 13 }}>{sale.customer}</span>
-                        {overdue && <Badge text={`${daysSince(sale.date)}d overdue`} color="#D45B5B" bg="#D45B5B15" />}
+                        {overdue && <Badge text={`${daysSince(sale.date)}d overdue`} color="#E05555" bg="#E0555515" />}
                       </div>
-                      <span style={{ fontWeight: 700, fontFamily: "var(--mono)", color: "#F59E0B" }}>{fmt(bal)}</span>
+                      <span style={{ fontWeight: 700, fontFamily: "var(--mono)", color: "#F0A429" }}>{fmt(bal)}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ flex: 1 }}><Bar value={sale.price - bal} max={sale.price} color="#F59E0B" /></div>
+                      <div style={{ flex: 1 }}><Bar value={sale.price - bal} max={sale.price} color="#F0A429" /></div>
                       <span style={{ fontSize: 10, color: "var(--dim)", fontFamily: "var(--mono)" }}>{pct(paidPct)} paid</span>
                     </div>
                   </div>
@@ -370,7 +374,7 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…" style={{ padding: "9px 13px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 13, fontFamily: "inherit", outline: "none", flex: mobile ? "1 1 100%" : "0 0 200px", minWidth: 0 }} />
         <div style={{ marginLeft: mobile ? 0 : "auto", display: "flex", gap: 3, background: "var(--card)", borderRadius: 8, padding: 3, flexWrap: "wrap", flex: mobile ? "1 1 100%" : undefined }}>
           {[["all","All"],["owed",`Owed(${owedCount})`],["paid","Paid"],["overdue",overdueCount > 0 ? `🚨(${overdueCount})` : "Overdue"],["cancelled",`Cancelled(${cancelledCount})`]].map(([k,l]) => (
-            <button key={k} onClick={() => setFilter(k)} style={{ padding: "6px 11px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", background: filter === k ? (k === "overdue" ? "#D45B5B" : k === "cancelled" ? "#6B7084" : "var(--accent)") : "transparent", color: filter === k ? "#fff" : k === "overdue" && overdueCount > 0 ? "#D45B5B" : "var(--dim)", flex: mobile ? 1 : undefined }}>{l}</button>
+            <button key={k} onClick={() => setFilter(k)} style={{ padding: "6px 11px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", background: filter === k ? (k === "overdue" ? "#E05555" : k === "cancelled" ? "#6B7084" : "var(--accent)") : "transparent", color: filter === k ? "#fff" : k === "overdue" && overdueCount > 0 ? "#E05555" : "var(--dim)", flex: mobile ? 1 : undefined }}>{l}</button>
           ))}
         </div>
       </div>
@@ -399,17 +403,17 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
                         const v = variantMap[si.variantId];
                         if (!v) return null;
                         const qty = v.quantityOnHand;
-                        const color = qty <= 0 ? "#D45B5B" : qty <= 2 ? "#F59E0B" : "#2DD4A8";
+                        const color = qty <= 0 ? "#E05555" : qty <= 2 ? "#F0A429" : "#22D3A5";
                         const label = qty <= 0 ? "Out of Stock" : qty <= 2 ? "Low Stock" : "In Stock";
                         return <span key={si.id} style={{ fontSize: 10, fontWeight: 600, color, marginRight: 6, whiteSpace: "nowrap" }}>● {v.productName} {v.size}: {label}</span>;
                       })}
                     </TD>
                     <TD><Badge text={s.salesperson || "—"} color="var(--accent)" bg="var(--accent-soft)" /></TD>
                     <TD right mono bold>{fmt(s.price)}</TD>
-                    <TD right mono color="#2DD4A8">{fmt(paid)}</TD>
-                    <TD right mono bold color={overdue ? "#D45B5B" : bal > 0 ? "#F59E0B" : "#2DD4A8"}>{s.cancelledAt ? "—" : bal > 0 ? fmt(bal) : "PAID"}</TD>
+                    <TD right mono color="#22D3A5">{fmt(paid)}</TD>
+                    <TD right mono bold color={overdue ? "#E05555" : bal > 0 ? "#F0A429" : "#22D3A5"}>{s.cancelledAt ? "—" : bal > 0 ? fmt(bal) : "PAID"}</TD>
                     <TD right mono>{pct(margin)}</TD>
-                    <TD><Badge text={s.cancelledAt ? "Cancelled" : s.delivered ? "Delivered" : "Pending"} color={s.cancelledAt ? "#6B7084" : s.delivered ? "#2DD4A8" : "#F59E0B"} bg={s.cancelledAt ? "rgba(107,112,132,0.15)" : s.delivered ? "rgba(45,212,168,0.12)" : "rgba(244,158,11,0.12)"} /></TD>
+                    <TD><Badge text={s.cancelledAt ? "Cancelled" : s.delivered ? "Delivered" : "Pending"} color={s.cancelledAt ? "#6B7084" : s.delivered ? "#22D3A5" : "#F0A429"} bg={s.cancelledAt ? "rgba(107,112,132,0.15)" : s.delivered ? "rgba(45,212,168,0.12)" : "rgba(244,158,11,0.12)"} /></TD>
                     <TD>{!s.cancelledAt && bal > 0 && <Btn v="ghost" s={{ padding: "4px 10px", fontSize: 11 }} onClick={e => { e.stopPropagation(); setPayModal(s.id); }}>Pay</Btn>}</TD>
                   </tr>
                 );
@@ -465,7 +469,7 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
 
       {/* Record Payment */}
       <Modal open={!!payModal} onClose={() => setPayModal(null)} title="Record Payment">
-        {paySale && <div style={{ background: "var(--card)", borderRadius: 8, padding: 14, marginBottom: 18 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{paySale.customer}</div><div style={{ fontSize: 12, color: "var(--dim)", marginTop: 4 }}>Balance due: <span style={{ color: "#F59E0B", fontWeight: 700, fontFamily: "var(--mono)" }}>{fmt(saleBalance(paySale))}</span></div></div>}
+        {paySale && <div style={{ background: "var(--card)", borderRadius: 8, padding: 14, marginBottom: 18 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{paySale.customer}</div><div style={{ fontSize: 12, color: "var(--dim)", marginTop: 4 }}>Balance due: <span style={{ color: "#F0A429", fontWeight: 700, fontFamily: "var(--mono)" }}>{fmt(saleBalance(paySale))}</span></div></div>}
         <div style={{ display: "flex", gap: 12 }}>
           <Field label="Date" value={payForm.date} onChange={v => setPayForm(f => ({ ...f, date: v }))} type="date" half />
           <Field label="Amount *" value={payForm.amount} onChange={v => setPayForm(f => ({ ...f, amount: v }))} type="number" placeholder="0.00" half />
@@ -500,7 +504,7 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
                 <div>
                   <div style={{ fontSize: 11, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Customer</div>
                   <div style={{ fontWeight: 600, fontSize: 15, cursor: "pointer", borderBottom: "1px dashed var(--dim)", display: "inline" }} onClick={() => { setDetailModal(null); setCustomerModal(detailSale.customer); }}>{detailSale.customer}</div>
-                  {overdue && <Badge text={`${daysSince(detailSale.date)}d overdue`} color="#D45B5B" bg="#D45B5B15" />}
+                  {overdue && <Badge text={`${daysSince(detailSale.date)}d overdue`} color="#E05555" bg="#E0555515" />}
                   {detailSale.phone   && <div style={{ fontSize: 12, color: "var(--dim)", marginTop: 4 }}>{detailSale.phone}</div>}
                   {detailSale.address && <div style={{ fontSize: 12, color: "var(--dim)", marginTop: 2 }}>{detailSale.address}</div>}
                 </div>
@@ -513,7 +517,7 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
               </div>
               {detailSale.notes && <div style={{ background: "var(--card)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, borderLeft: "3px solid var(--accent)", fontSize: 13, whiteSpace: "pre-wrap" }}>{detailSale.notes}</div>}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 20 }}>
-                {[["Total",fmt(detailSale.price),null],["Paid",fmt(paid),"#2DD4A8"],["Balance",bal>0?fmt(bal):"PAID",overdue?"#D45B5B":bal>0?"#F59E0B":"#2DD4A8"],["Margin",pct(detailSale.price>0?(detailSale.price-detailSale.cost)/detailSale.price:0),null]].map(([l,v,c]) => (
+                {[["Total",fmt(detailSale.price),null],["Paid",fmt(paid),"#22D3A5"],["Balance",bal>0?fmt(bal):"PAID",overdue?"#E05555":bal>0?"#F0A429":"#22D3A5"],["Margin",pct(detailSale.price>0?(detailSale.price-detailSale.cost)/detailSale.price:0),null]].map(([l,v,c]) => (
                   <div key={l} style={{ background: "var(--card)", borderRadius: 8, padding: 12, textAlign: "center" }}>
                     <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase" }}>{l}</div>
                     <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--mono)", color: c || "inherit" }}>{v}</div>
@@ -529,10 +533,10 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
                       {detailSale.payments.map((p, i) => (
                         <tr key={i} style={{ borderBottom: "1px solid var(--line)" }}>
                           <TD mono>{p.date}</TD>
-                          <TD right mono bold color="#2DD4A8">{fmt(p.amount)}</TD>
+                          <TD right mono bold color="#22D3A5">{fmt(p.amount)}</TD>
                           <TD>{p.method}</TD>
                           <TD color="var(--dim)">{p.note}</TD>
-                          <TD><button onClick={() => setReasonModal({ type: "deletePayment", id: detailSale.id, paymentId: p.id })} style={{ background: "none", border: "none", cursor: "pointer", color: "#D45B5B", fontSize: 14, padding: "2px 6px" }} title="Refund / remove">×</button></TD>
+                          <TD><button onClick={() => setReasonModal({ type: "deletePayment", id: detailSale.id, paymentId: p.id })} style={{ background: "none", border: "none", cursor: "pointer", color: "#E05555", fontSize: 14, padding: "2px 6px" }} title="Refund / remove">×</button></TD>
                         </tr>
                       ))}
                     </tbody>
@@ -628,7 +632,7 @@ function ExpensesTab({ expenses, addExpense, deleteExpense, bounds }) {
               return (
                 <tr key={e.id} style={{ borderBottom: "1px solid var(--line)", transition: "background 0.15s" }} {...hoverRow}>
                   <TD mono>{e.date}</TD><TD>{cat?.label || e.category}</TD><TD bold>{e.vendor}</TD>
-                  <TD right mono bold color="#D45B5B">{fmt(e.amount)}</TD>
+                  <TD right mono bold color="#E05555">{fmt(e.amount)}</TD>
                   <TD color="var(--dim)">{e.note}</TD>
                   <TD><Btn v="danger" s={{ padding: "3px 10px", fontSize: 11 }} onClick={() => setReasonModal(e.id)}>×</Btn></TD>
                 </tr>
@@ -683,11 +687,11 @@ function ReportsTab({ sales, expenses, salespeople, settings }) {
               {monthly.map(m => (
                 <tr key={m.month} style={{ borderBottom: "1px solid var(--line)", transition: "background 0.15s" }} {...hoverRow}>
                   <TD bold>{fmtMonth(m.month)}</TD>
-                  <TD right mono color="#2DD4A8">{fmt(m.revenue)}</TD><TD right mono color="#D45B5B">{fmt(m.cost)}</TD>
-                  <TD right mono bold color={m.profit >= 0 ? "#2DD4A8" : "#D45B5B"}>{fmt(m.profit)}</TD>
+                  <TD right mono color="#22D3A5">{fmt(m.revenue)}</TD><TD right mono color="#E05555">{fmt(m.cost)}</TD>
+                  <TD right mono bold color={m.profit >= 0 ? "#22D3A5" : "#E05555"}>{fmt(m.profit)}</TD>
                   <TD right mono>{pct(m.margin)}</TD>
-                  <TD right mono color="#5B8DEF">{fmt(m.collected)}</TD><TD right mono color="#D45B5B">{fmt(m.expenses)}</TD>
-                  <TD right mono bold color={m.cashFlow >= 0 ? "#2DD4A8" : "#D45B5B"}>{fmt(m.cashFlow)}</TD>
+                  <TD right mono color="#5B8DEF">{fmt(m.collected)}</TD><TD right mono color="#E05555">{fmt(m.expenses)}</TD>
+                  <TD right mono bold color={m.cashFlow >= 0 ? "#22D3A5" : "#E05555"}>{fmt(m.cashFlow)}</TD>
                 </tr>
               ))}
               {monthly.length > 1 && (() => {
@@ -695,11 +699,11 @@ function ReportsTab({ sales, expenses, salespeople, settings }) {
                 return (
                   <tr style={{ borderTop: "2px solid var(--line)", background: "rgba(91,141,239,0.04)" }}>
                     <TD bold style={{ fontSize: 11, textTransform: "uppercase" }}>Total</TD>
-                    <TD right mono bold color="#2DD4A8">{fmt(t.revenue)}</TD><TD right mono bold color="#D45B5B">{fmt(t.cost)}</TD>
-                    <TD right mono bold color={t.profit>=0?"#2DD4A8":"#D45B5B"}>{fmt(t.profit)}</TD>
+                    <TD right mono bold color="#22D3A5">{fmt(t.revenue)}</TD><TD right mono bold color="#E05555">{fmt(t.cost)}</TD>
+                    <TD right mono bold color={t.profit>=0?"#22D3A5":"#E05555"}>{fmt(t.profit)}</TD>
                     <TD right mono bold>{pct(t.revenue>0?t.profit/t.revenue:0)}</TD>
-                    <TD right mono bold color="#5B8DEF">{fmt(t.collected)}</TD><TD right mono bold color="#D45B5B">{fmt(t.expenses)}</TD>
-                    <TD right mono bold color={t.cashFlow>=0?"#2DD4A8":"#D45B5B"}>{fmt(t.cashFlow)}</TD>
+                    <TD right mono bold color="#5B8DEF">{fmt(t.collected)}</TD><TD right mono bold color="#E05555">{fmt(t.expenses)}</TD>
+                    <TD right mono bold color={t.cashFlow>=0?"#22D3A5":"#E05555"}>{fmt(t.cashFlow)}</TD>
                   </tr>
                 );
               })()}
@@ -716,7 +720,7 @@ function ReportsTab({ sales, expenses, salespeople, settings }) {
               {commissionData.map(d => (
                 <tr key={d.name} style={{ borderBottom: "1px solid var(--line)" }} {...hoverRow}>
                   <TD bold>{d.name}</TD><TD right mono>{d.count}</TD><TD right mono>{fmt(d.revenue)}</TD>
-                  <TD right mono>{d.rate}%</TD><TD right mono bold color="#2DD4A8">{fmt(d.payout)}</TD>
+                  <TD right mono>{d.rate}%</TD><TD right mono bold color="#22D3A5">{fmt(d.payout)}</TD>
                 </tr>
               ))}
               {commissionData.length > 1 && (
@@ -724,7 +728,7 @@ function ReportsTab({ sales, expenses, salespeople, settings }) {
                   <TD bold style={{ fontSize: 11, textTransform: "uppercase" }}>Total</TD>
                   <TD right mono bold>{commissionData.reduce((s,d)=>s+d.count,0)}</TD>
                   <TD right mono bold>{fmt(commissionData.reduce((s,d)=>s+d.revenue,0))}</TD><TD/>
-                  <TD right mono bold color="#2DD4A8">{fmt(commissionData.reduce((s,d)=>s+d.payout,0))}</TD>
+                  <TD right mono bold color="#22D3A5">{fmt(commissionData.reduce((s,d)=>s+d.payout,0))}</TD>
                 </tr>
               )}
             </tbody>
@@ -767,30 +771,43 @@ export default function App() {
   if (!authed) return <LockScreen onLogin={login} />;
 
   return (
-    <div style={{ "--bg": "#0F1118", "--card": "#181B25", "--line": "#252836", "--text": "#E8E9ED", "--dim": "#6B7084", "--accent": "#5B8DEF", "--accent-soft": "rgba(91,141,239,0.12)", "--font": "'DM Sans', system-ui, sans-serif", "--mono": "'JetBrains Mono', 'Consolas', monospace", fontFamily: "var(--font)", color: "var(--text)", background: "var(--bg)", minHeight: "100vh" }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+    <div style={{ "--bg": "#090B11", "--card": "#111318", "--line": "#1C1F2E", "--text": "#E2E5F0", "--dim": "#545870", "--accent": "#5B8DEF", "--accent-soft": "rgba(91,141,239,0.1)", "--green": "#22D3A5", "--red": "#E05555", "--yellow": "#F0A429", "--purple": "#8B65F0", "--font": "'DM Sans', system-ui, sans-serif", "--mono": "'JetBrains Mono', 'Consolas', monospace", fontFamily: "var(--font)", color: "var(--text)", background: "var(--bg)", minHeight: "100vh" }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
 
       {/* Nav */}
-      <div style={{ background: "var(--card)", borderBottom: "1px solid var(--line)", padding: mobile ? "0 8px" : "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56, position: "sticky", top: 0, zIndex: 100, gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg, #5B8DEF, #8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#fff" }}>S</div>
-          {!mobile && <div><div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>{settings.storeName}</div><div style={{ fontSize: 8, color: "var(--dim)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>StorTrack</div></div>}
+      <div style={{ background: "rgba(9,11,17,0.95)", borderBottom: "1px solid var(--line)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: mobile ? "0 10px" : "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60, position: "sticky", top: 0, zIndex: 100, gap: 10 }}>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg, #5B8DEF 0%, #8B65F0 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: "#fff", boxShadow: "0 4px 12px rgba(91,141,239,0.4)", flexShrink: 0 }}>S</div>
+          {!mobile && (
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1 }}>{settings.storeName}</div>
+              <div style={{ fontSize: 9, color: "var(--dim)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 2 }}>StorTrack</div>
+            </div>
+          )}
         </div>
 
-        <div style={{ display: "flex", gap: 1, overflowX: "auto", flex: 1, justifyContent: "center" }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ background: tab === t.id ? "var(--accent-soft)" : "transparent", color: tab === t.id ? "var(--accent)" : "var(--dim)", border: "none", padding: mobile ? "7px 7px" : "7px 11px", borderRadius: 8, fontSize: mobile ? 10 : 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 3, position: "relative", flexShrink: 0 }}>
-              <span style={{ fontSize: mobile ? 14 : 13 }}>{t.icon}</span>
-              {!mobile && t.label}
-              {t.id === "sales" && owedCount > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 14, height: 14, borderRadius: "50%", background: overdueCount > 0 ? "#D45B5B" : "#F59E0B", color: "#000", fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" }}>{owedCount}</span>}
-            </button>
-          ))}
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 2, overflowX: "auto", flex: 1, justifyContent: "center", scrollbarWidth: "none" }}>
+          {tabs.map(t => {
+            const active = tab === t.id;
+            return (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{ background: active ? "rgba(91,141,239,0.12)" : "transparent", color: active ? "var(--accent)" : "var(--dim)", border: active ? "1px solid rgba(91,141,239,0.2)" : "1px solid transparent", padding: mobile ? "6px 8px" : "7px 13px", borderRadius: 9, fontSize: mobile ? 11 : 12, fontWeight: active ? 700 : 500, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, position: "relative", flexShrink: 0, transition: "all 0.15s", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: mobile ? 14 : 13, lineHeight: 1 }}>{t.icon}</span>
+                {!mobile && t.label}
+                {t.id === "sales" && owedCount > 0 && (
+                  <span style={{ minWidth: 16, height: 16, borderRadius: 99, background: overdueCount > 0 ? "#E05555" : "#F0A429", color: "#fff", fontSize: 9, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>{owedCount}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
+        {/* Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-          <button onClick={() => setSettingsOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--dim)", fontSize: 16, padding: "4px" }}>⚙</button>
-          {!mobile && <button onClick={reload} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--dim)", fontSize: 16, padding: "4px" }}>↻</button>}
-          <button onClick={logout} style={{ background: "none", border: "1px solid var(--line)", borderRadius: 6, cursor: "pointer", color: "var(--dim)", fontSize: 11, fontWeight: 600, padding: "4px 8px", fontFamily: "inherit" }}>Lock</button>
+          <button onClick={() => setSettingsOpen(true)} title="Settings" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 8, cursor: "pointer", color: "var(--dim)", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, transition: "all 0.15s" }}>⚙</button>
+          {!mobile && <button onClick={reload} title="Refresh" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 8, cursor: "pointer", color: "var(--dim)", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, transition: "all 0.15s" }}>↻</button>}
+          <button onClick={logout} style={{ background: "transparent", border: "1.5px solid var(--line)", borderRadius: 8, cursor: "pointer", color: "var(--dim)", fontSize: 11, fontWeight: 600, padding: "6px 12px", fontFamily: "inherit", transition: "all 0.15s" }}>Lock</button>
         </div>
       </div>
 
@@ -802,12 +819,12 @@ export default function App() {
       )}
 
       {/* Content */}
-      <div style={{ padding: mobile ? "16px 10px" : tablet ? "20px 16px" : "24px 24px", maxWidth: 1280, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-        <div style={{ marginBottom: mobile ? 14 : 20 }}>
-          <h1 style={{ margin: 0, fontSize: mobile ? 16 : 20, fontWeight: 700 }}>{tabs.find(t => t.id === tab)?.label}</h1>
+      <div style={{ padding: mobile ? "20px 12px" : tablet ? "24px 20px" : "28px 28px", maxWidth: 1320, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+        <div style={{ marginBottom: mobile ? 20 : 24 }}>
+          <h1 style={{ margin: 0, fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: "-0.02em" }}>{tabs.find(t => t.id === tab)?.label}</h1>
         </div>
 
-        {error && <div style={{ background: "#D45B5B22", border: "1px solid #D45B5B44", borderRadius: 10, padding: "14px 18px", marginBottom: 20, color: "#D45B5B", fontSize: 13 }}>⚠ {error} — <button onClick={reload} style={{ background: "none", border: "none", color: "#5B8DEF", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Retry</button></div>}
+        {error && <div style={{ background: "rgba(224,85,85,0.08)", border: "1px solid rgba(224,85,85,0.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 20, color: "#E05555", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "space-between" }}>⚠ {error} — <button onClick={reload} style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Retry</button></div>}
 
         {loading ? <Spinner /> : (
           <>
@@ -827,3 +844,4 @@ export default function App() {
     </div>
   );
 }
+

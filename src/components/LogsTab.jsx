@@ -2,14 +2,14 @@ import { useState, useMemo } from "react";
 import { TH, TD, Badge, hoverRow, Modal } from "./ui.jsx";
 
 const ACTION_COLORS = {
-  create:           { color: "#2DD4A8", bg: "rgba(45,212,168,0.12)" },
+  create:           { color: "#22D3A5", bg: "rgba(45,212,168,0.12)" },
   edit:             { color: "#5B8DEF", bg: "rgba(91,141,239,0.12)" },
-  delete:           { color: "#D45B5B", bg: "rgba(212,91,91,0.12)"  },
-  cancel:           { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-  refund:           { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-  delivered:        { color: "#2DD4A8", bg: "rgba(45,212,168,0.12)" },
+  delete:           { color: "#E05555", bg: "rgba(212,91,91,0.12)"  },
+  cancel:           { color: "#F0A429", bg: "rgba(245,158,11,0.12)" },
+  refund:           { color: "#F0A429", bg: "rgba(245,158,11,0.12)" },
+  delivered:        { color: "#22D3A5", bg: "rgba(45,212,168,0.12)" },
   undelivered:      { color: "#94A3B8", bg: "rgba(148,163,184,0.12)" },
-  adjust_inventory: { color: "#8B5CF6", bg: "rgba(139,92,246,0.12)" },
+  adjust_inventory: { color: "#8B65F0", bg: "rgba(139,92,246,0.12)" },
 };
 
 const ENTITY_LABELS = {
@@ -100,7 +100,7 @@ export function LogsTab({ auditLogs }) {
               </div>
 
               {detail.reason && (
-                <div style={{ background: "var(--card)", borderRadius: 8, padding: "10px 14px", marginBottom: 20, borderLeft: "3px solid #F59E0B" }}>
+                <div style={{ background: "var(--card)", borderRadius: 8, padding: "10px 14px", marginBottom: 20, borderLeft: "3px solid #F0A429" }}>
                   <div style={{ fontSize: 10, color: "var(--dim)", fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Reason</div>
                   <div style={{ fontSize: 13 }}>{detail.reason}</div>
                 </div>
@@ -133,3 +133,4 @@ export function LogsTab({ auditLogs }) {
     </div>
   );
 }
+

@@ -3,18 +3,18 @@ import { Modal, Field, Btn, TH, TD, Badge, hoverRow, ReasonModal } from "./ui.js
 import { fmt } from "../utils.js";
 
 function stockBadge(qty) {
-  if (qty <= 0)  return <Badge text="Out of Stock" color="#D45B5B" bg="rgba(212,91,91,0.12)" />;
-  if (qty <= 2)  return <Badge text="Low Stock"    color="#F59E0B" bg="rgba(245,158,11,0.12)" />;
-  return              <Badge text="In Stock"     color="#2DD4A8" bg="rgba(45,212,168,0.12)" />;
+  if (qty <= 0)  return <Badge text="Out of Stock" color="#E05555" bg="rgba(212,91,91,0.12)" />;
+  if (qty <= 2)  return <Badge text="Low Stock"    color="#F0A429" bg="rgba(245,158,11,0.12)" />;
+  return              <Badge text="In Stock"     color="#22D3A5" bg="rgba(45,212,168,0.12)" />;
 }
 
 function productStockBadge(variants) {
   if (!variants.length) return null;
   const outCount  = variants.filter(v => v.quantityOnHand <= 0).length;
   const lowCount  = variants.filter(v => v.quantityOnHand > 0 && v.quantityOnHand <= 2).length;
-  if (outCount === variants.length) return <Badge text="Out of Stock" color="#D45B5B" bg="rgba(212,91,91,0.12)" />;
-  if (outCount > 0 || lowCount > 0) return <Badge text="Low Stock"   color="#F59E0B" bg="rgba(245,158,11,0.12)" />;
-  return <Badge text="In Stock" color="#2DD4A8" bg="rgba(45,212,168,0.12)" />;
+  if (outCount === variants.length) return <Badge text="Out of Stock" color="#E05555" bg="rgba(212,91,91,0.12)" />;
+  if (outCount > 0 || lowCount > 0) return <Badge text="Low Stock"   color="#F0A429" bg="rgba(245,158,11,0.12)" />;
+  return <Badge text="In Stock" color="#22D3A5" bg="rgba(45,212,168,0.12)" />;
 }
 
 function blankProduct(vendorId = "") { return { name: "", brand: "", vendorId, notes: "" }; }
@@ -94,8 +94,8 @@ export function InventoryTab({ products, vendors, addProduct, editProduct, delet
     <div>
       {/* Low stock alert */}
       {lowStock.length > 0 && (
-        <div style={{ background: "#F59E0B15", border: "1px solid #F59E0B33", borderRadius: 10, padding: "12px 18px", marginBottom: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#F59E0B", marginBottom: 6 }}>⚠ {lowStock.length} variant{lowStock.length !== 1 ? "s" : ""} low on stock (≤2 units)</div>
+        <div style={{ background: "#F0A42915", border: "1px solid #F0A42933", borderRadius: 10, padding: "12px 18px", marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#F0A429", marginBottom: 6 }}>⚠ {lowStock.length} variant{lowStock.length !== 1 ? "s" : ""} low on stock (≤2 units)</div>
           <div style={{ fontSize: 12, color: "var(--dim)" }}>
             {lowStock.map(v => { const p = products.find(p => p.variants.some(vv => vv.id === v.id)); return `${p?.name} — ${v.size} (${v.quantityOnHand} left)`; }).join(" · ")}
           </div>
@@ -161,7 +161,7 @@ export function InventoryTab({ products, vendors, addProduct, editProduct, delet
                             <TD right mono>{fmt(v.cost)}</TD>
                             <TD right mono>{fmt(v.retailPrice)}</TD>
                             <TD right mono>{v.retailPrice > 0 ? ((v.retailPrice - v.cost) / v.retailPrice * 100).toFixed(1) + "%" : "—"}</TD>
-                            <TD right mono bold color={v.quantityOnHand <= 0 ? "#D45B5B" : v.quantityOnHand <= 2 ? "#F59E0B" : "#2DD4A8"}>{v.quantityOnHand}</TD>
+                            <TD right mono bold color={v.quantityOnHand <= 0 ? "#E05555" : v.quantityOnHand <= 2 ? "#F0A429" : "#22D3A5"}>{v.quantityOnHand}</TD>
                             <TD right mono>{fmt(v.quantityOnHand * v.cost)}</TD>
                             <TD style={{ whiteSpace: "nowrap" }}>
                               <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
@@ -201,7 +201,7 @@ export function InventoryTab({ products, vendors, addProduct, editProduct, delet
               <div style={{ flex: 1 }}><Field label={idx === 0 ? "Cost" : ""} value={v.cost} onChange={val => setVarForms(prev => prev.map(vv => vv._id === v._id ? { ...vv, cost: val } : vv))} type="number" placeholder="0.00" /></div>
               <div style={{ flex: 1 }}><Field label={idx === 0 ? "Retail $" : ""} value={v.retailPrice} onChange={val => setVarForms(prev => prev.map(vv => vv._id === v._id ? { ...vv, retailPrice: val } : vv))} type="number" placeholder="0.00" /></div>
               <div style={{ flex: 1 }}><Field label={idx === 0 ? "Qty" : ""} value={v.qty} onChange={val => setVarForms(prev => prev.map(vv => vv._id === v._id ? { ...vv, qty: val } : vv))} type="number" placeholder="0" /></div>
-              {varForms.length > 1 && <button onClick={() => setVarForms(prev => prev.filter(vv => vv._id !== v._id))} style={{ background: "none", border: "none", color: "#D45B5B", fontSize: 16, cursor: "pointer", marginBottom: 14, padding: "0 4px" }}>×</button>}
+              {varForms.length > 1 && <button onClick={() => setVarForms(prev => prev.filter(vv => vv._id !== v._id))} style={{ background: "none", border: "none", color: "#E05555", fontSize: 16, cursor: "pointer", marginBottom: 14, padding: "0 4px" }}>×</button>}
             </div>
           ))}
           <Btn v="ghost" s={{ fontSize: 11, padding: "5px 12px" }} onClick={() => setVarForms(prev => [...prev, blankVariant()])}>+ Add Size</Btn>
@@ -277,3 +277,4 @@ export function InventoryTab({ products, vendors, addProduct, editProduct, delet
     </div>
   );
 }
+

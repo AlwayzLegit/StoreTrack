@@ -71,9 +71,9 @@ export function VendorsTab({ vendors, products, vendorPurchases, addVendor, edit
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--dim)", marginBottom: 3 }}>Vendors</div>
           <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "var(--mono)" }}>{vendors.length}</div>
         </div>
-        <div style={{ background: "var(--card)", borderRadius: 12, padding: "14px 16px", borderLeft: "4px solid #D45B5B" }}>
+        <div style={{ background: "var(--card)", borderRadius: 12, padding: "14px 16px", borderLeft: "4px solid #E05555" }}>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--dim)", marginBottom: 3 }}>Total Owed to Vendors</div>
-          <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "var(--mono)", color: totalOwed > 0 ? "#D45B5B" : "#2DD4A8" }}>{fmt(totalOwed)}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "var(--mono)", color: totalOwed > 0 ? "#E05555" : "#22D3A5" }}>{fmt(totalOwed)}</div>
         </div>
         <div style={{ background: "var(--card)", borderRadius: 12, padding: "14px 16px", borderLeft: "4px solid #5B8DEF" }}>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--dim)", marginBottom: 3 }}>Purchase Orders</div>
@@ -103,7 +103,7 @@ export function VendorsTab({ vendors, products, vendorPurchases, addVendor, edit
                         <TD color="var(--dim)">{v.contactName}</TD>
                         <TD color="var(--dim)">{v.phone}</TD>
                         <TD color="var(--dim)">{v.email}</TD>
-                        <TD right mono bold color={bal > 0 ? "#D45B5B" : "#2DD4A8"}>{bal > 0 ? fmt(bal) : "PAID"}</TD>
+                        <TD right mono bold color={bal > 0 ? "#E05555" : "#22D3A5"}>{bal > 0 ? fmt(bal) : "PAID"}</TD>
                         <TD>
                           <div style={{ display: "flex", gap: 6 }}>
                             <Btn v="ghost" s={{ padding: "4px 10px", fontSize: 11 }} onClick={e => { e.stopPropagation(); openPurchaseModal(v.id); }}>+ Purchase</Btn>
@@ -152,8 +152,8 @@ export function VendorsTab({ vendors, products, vendorPurchases, addVendor, edit
                           <TD mono>{p.date}</TD>
                           <TD color="var(--dim)">{p.invoiceNumber || "—"}</TD>
                           <TD right mono bold>{fmt(p.total)}</TD>
-                          <TD right mono color="#2DD4A8">{fmt(p.amountPaid)}</TD>
-                          <TD right mono bold color={owed > 0 ? "#D45B5B" : "#2DD4A8"}>{owed > 0 ? fmt(owed) : "PAID"}</TD>
+                          <TD right mono color="#22D3A5">{fmt(p.amountPaid)}</TD>
+                          <TD right mono bold color={owed > 0 ? "#E05555" : "#22D3A5"}>{owed > 0 ? fmt(owed) : "PAID"}</TD>
                           <TD><Btn v="danger" s={{ padding: "3px 8px", fontSize: 10 }} onClick={() => { if (confirm("Delete this purchase?")) deleteVendorPurchase(p.id, "Manual deletion"); }}>×</Btn></TD>
                         </tr>
                       );
@@ -245,3 +245,4 @@ export function VendorsTab({ vendors, products, vendorPurchases, addVendor, edit
     </div>
   );
 }
+
