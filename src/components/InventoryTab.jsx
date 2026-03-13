@@ -2,6 +2,21 @@ import { useState, useMemo } from "react";
 import { Modal, Field, Btn, TH, TD, Badge, hoverRow, ReasonModal } from "./ui.jsx";
 import { fmt } from "../utils.js";
 
+function stockBadge(qty) {
+  if (qty <= 0)  return <Badge text="Out of Stock" color="#D45B5B" bg="rgba(212,91,91,0.12)" />;
+  if (qty <= 2)  return <Badge text="Low Stock"    color="#F59E0B" bg="rgba(245,158,11,0.12)" />;
+  return              <Badge text="In Stock"     color="#2DD4A8" bg="rgba(45,212,168,0.12)" />;
+}
+
+function productStockBadge(variants) {
+  if (!variants.length) return null;
+  const outCount  = variants.filter(v => v.quantityOnHand <= 0).length;
+  const lowCount  = variants.filter(v => v.quantityOnHand > 0 && v.quantityOnHand <= 2).length;
+  if (outCount === variants.length) return <Badge text="Out of Stock" color="#D45B5B" bg="rgba(212,91,91,0.12)" />;
+  if (outCount > 0 || lowCount > 0) return <Badge text="Low Stock"   color="#F59E0B" bg="rgba(245,158,11,0.12)" />;
+  return <Badge text="In Stock" color="#2DD4A8" bg="rgba(45,212,168,0.12)" />;
+}
+
 function blankProduct(vendorId = "") { return { name: "", brand: "", vendorId, notes: "" }; }
 function blankVariant() { return { _id: Date.now(), size: "", cost: "", retailPrice: "", qty: 0 }; }
 
@@ -121,7 +136,8 @@ export function InventoryTab({ products, vendors, addProduct, editProduct, delet
                       <div style={{ fontSize: 12, fontFamily: "var(--mono)", fontWeight: 600 }}>{totalUnits} units</div>
                       <div style={{ fontSize: 10, color: "var(--dim)" }}>{fmt(totalValue)} cost value</div>
                     </div>
-                    <Badge text={`${p.variants.length} sizes`} color="var(--accent)" bg="var(--accent-soft)" />
+                    {productStockBadge(p.variants)}
+                    <Badge text={`${p.variants.length} size${p.variants.length !== 1 ? "s" : ""}`} color="var(--accent)" bg="var(--accent-soft)" />
                     <div style={{ display: "flex", gap: 6 }}>
                       <Btn v="ghost" s={{ padding: "4px 10px", fontSize: 11 }} onClick={e => { e.stopPropagation(); setEditForm({ name: p.name, brand: p.brand, vendorId: p.vendorId || "", notes: p.notes }); setEditModal(p.id); }}>Edit</Btn>
                       <Btn v="danger" s={{ padding: "4px 10px", fontSize: 11 }} onClick={e => { e.stopPropagation(); if (confirm(`Delete ${p.name} and all variants?`)) deleteProduct(p.id); }}>×</Btn>
@@ -135,12 +151,13 @@ export function InventoryTab({ products, vendors, addProduct, editProduct, delet
                     {p.notes && <div style={{ fontSize: 12, color: "var(--dim)", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>{p.notes}</div>}
                     <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
                       <thead><tr style={{ borderBottom: "1px solid var(--line)" }}>
-                        <TH>Size</TH><TH right>Cost</TH><TH right>Retail</TH><TH right>Margin</TH><TH right>On Hand</TH><TH right>Value</TH><TH></TH>
+                        <TH>Size</TH><TH>Status</TH><TH right>Cost</TH><TH right>Retail</TH><TH right>Margin</TH><TH right>On Hand</TH><TH right>Value</TH><TH></TH>
                       </tr></thead>
                       <tbody>
                         {p.variants.map(v => (
                           <tr key={v.id} style={{ borderBottom: "1px solid var(--line)" }}>
                             <TD bold>{v.size}</TD>
+                            <TD>{stockBadge(v.quantityOnHand)}</TD>
                             <TD right mono>{fmt(v.cost)}</TD>
                             <TD right mono>{fmt(v.retailPrice)}</TD>
                             <TD right mono>{v.retailPrice > 0 ? ((v.retailPrice - v.cost) / v.retailPrice * 100).toFixed(1) + "%" : "—"}</TD>

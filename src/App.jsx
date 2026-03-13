@@ -377,9 +377,9 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
       <div style={{ background: "var(--card)", borderRadius: 12, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
-            <thead><tr style={{ borderBottom: "2px solid var(--line)" }}>{["Date","Customer","Salesperson","Total","Paid","Balance","Margin","Status",""].map(h => <TH key={h} right={["Total","Paid","Balance","Margin"].includes(h)}>{h}</TH>)}</tr></thead>
+            <thead><tr style={{ borderBottom: "2px solid var(--line)" }}>{["Date","Customer","Items","Salesperson","Total","Paid","Balance","Margin","Status",""].map(h => <TH key={h} right={["Total","Paid","Balance","Margin"].includes(h)}>{h}</TH>)}</tr></thead>
             <tbody>
-              {filtered.length === 0 && <tr><td colSpan={9} style={{ padding: "48px 20px", textAlign: "center", color: "var(--dim)", fontSize: 13 }}>No sales in this period.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={10} style={{ padding: "48px 20px", textAlign: "center", color: "var(--dim)", fontSize: 13 }}>No sales in this period.</td></tr>}
               {filtered.map(s => {
                 const paid   = s.payments.reduce((sum, p) => sum + p.amount, 0);
                 const bal    = s.price - paid;
@@ -392,6 +392,7 @@ function SalesTab({ sales, addSale, editSale, cancelSale, deleteSale, recordPaym
                       <span onClick={e => { e.stopPropagation(); setCustomerModal(s.customer); }} style={{ cursor: "pointer", borderBottom: "1px dashed var(--dim)" }}>{s.customer}</span>
                       {s.cancelledAt && <Badge text="Cancelled" color="#6B7084" bg="rgba(107,112,132,0.15)" />}
                     </TD>
+                    <TD style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", color: "var(--dim)", fontSize: 12 }}>{s.items || "—"}</TD>
                     <TD><Badge text={s.salesperson || "—"} color="var(--accent)" bg="var(--accent-soft)" /></TD>
                     <TD right mono bold>{fmt(s.price)}</TD>
                     <TD right mono color="#2DD4A8">{fmt(paid)}</TD>
