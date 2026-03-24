@@ -139,15 +139,10 @@ export function useData() {
       const { error: sie } = await supabase.from("sale_items").insert(saleItemInserts);
       if (sie) throw sie;
 
-      // Decrement inventory for catalog items
+      // Decrement inventory atomically via RPC (prevents race conditions)
       for (const item of lineItems.filter(i => i.variantId)) {
-        await supabase.rpc ? null : null; // fallback below
-        const { error: ve } = await supabase.from("product_variants").update({ quantity_on_hand: supabase.rpc ? undefined : undefined }).eq("id", item.variantId);
-        // Use raw decrement via direct update
-        const current = variants.find(v => v.id === item.variantId);
-        if (current) {
-          await supabase.from("product_variants").update({ quantity_on_hand: Math.max(0, current.quantity_on_hand - item.qty) }).eq("id", item.variantId);
-        }
+        const { error: ve } = await supabase.rpc("decrement_stock", { variant_id: item.variantId, qty: item.qty });
+        if (ve) console.error("Stock decrement failed:", ve.message);
       }
     }
 
@@ -268,12 +263,10 @@ export function useData() {
       const { error: ie } = await supabase.from("vendor_purchase_items").insert(items.map(i => ({ purchase_id: vp.id, variant_id: i.variantId || null, description: i.description, quantity: i.qty, unit_cost: i.unitCost })));
       if (ie) throw ie;
 
-      // Increment inventory
+      // Increment inventory atomically via RPC (prevents race conditions)
       for (const item of items.filter(i => i.variantId)) {
-        const current = variants.find(v => v.id === item.variantId);
-        if (current) {
-          await supabase.from("product_variants").update({ quantity_on_hand: current.quantity_on_hand + item.qty }).eq("id", item.variantId);
-        }
+        const { error: ve } = await supabase.rpc("increment_stock", { variant_id: item.variantId, qty: item.qty });
+        if (ve) console.error("Stock increment failed:", ve.message);
       }
     }
 

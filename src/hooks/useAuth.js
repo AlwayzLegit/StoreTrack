@@ -1,11 +1,33 @@
-import { useState } from "react";
-
-const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || "stortrack2026";
-const AUTH_KEY = "stortrack_auth";
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
 export function useAuth() {
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem(AUTH_KEY) === "1");
-  const login  = (pw) => { if (pw === APP_PASSWORD) { sessionStorage.setItem(AUTH_KEY, "1"); setAuthed(true); return true; } return false; };
-  const logout = () => { sessionStorage.removeItem(AUTH_KEY); setAuthed(false); };
-  return { authed, login, logout };
+  const [user, setUser]   = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  return { user, authed: !!user, loading, login, logout };
 }

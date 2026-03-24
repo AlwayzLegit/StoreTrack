@@ -8,10 +8,27 @@ import { LogsTab }      from "./components/LogsTab.jsx";
 import { Modal, Field, Btn, TH, TD, Badge, hoverRow, StatCard, Bar, Spinner, ReasonModal, LineItemBuilder } from "./components/ui.jsx";
 import { today, fmt, pct, daysSince, saleBalance, isOverdue, getDateBounds, filterByDate, exportCSV, buildDeposits, buildMonthlyPL, PAYMENT_TYPES, EXPENSE_CATS, SALE_CSV_COLS, EXPENSE_CSV_COLS } from "./utils.js";
 
-// ─── Lock Screen ──────────────────────────────────────────────────────────────
-function LockScreen({ onLogin }) {
-  const [pw, setPw] = useState(""); const [err, setErr] = useState(false);
-  const submit = (e) => { e.preventDefault(); if (!onLogin(pw)) { setErr(true); setPw(""); setTimeout(() => setErr(false), 1500); } };
+// ─── Login Screen (Supabase Auth) ────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr]           = useState("");
+  const [loading, setLoading]   = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr(""); setLoading(true);
+    try {
+      await onLogin(email, password);
+    } catch (error) {
+      setErr(error.message || "Invalid email or password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = (hasErr) => ({ width: "100%", padding: "13px 16px", borderRadius: 11, border: `1.5px solid ${hasErr ? "#E05555" : "#1C1F2E"}`, background: "#090B11", color: "#E2E5F0", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 12, transition: "border-color 0.15s" });
+
   return (
     <div style={{ minHeight: "100vh", background: "#090B11", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', system-ui, sans-serif", padding: 20 }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -19,14 +36,16 @@ function LockScreen({ onLogin }) {
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #5B8DEF 0%, #8B65F0 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#fff", margin: "0 auto 16px", boxShadow: "0 8px 32px rgba(91,141,239,0.4)" }}>S</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: "#E2E5F0", letterSpacing: "-0.02em" }}>StorTrack</div>
-          <div style={{ fontSize: 13, color: "#545870", marginTop: 6 }}>Enter your password to continue</div>
+          <div style={{ fontSize: 13, color: "#545870", marginTop: 6 }}>Sign in to your account</div>
         </div>
         <div style={{ background: "#111318", borderRadius: 18, padding: "32px 28px", border: "1px solid #1C1F2E", boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}>
           <form onSubmit={submit}>
-            <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Password" autoFocus
-              style={{ width: "100%", padding: "13px 16px", borderRadius: 11, border: `1.5px solid ${err ? "#E05555" : "#1C1F2E"}`, background: "#090B11", color: "#E2E5F0", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 12, transition: "border-color 0.15s" }} />
-            {err && <div style={{ color: "#E05555", fontSize: 12, marginBottom: 12, textAlign: "center" }}>Incorrect password. Try again.</div>}
-            <button type="submit" style={{ width: "100%", padding: "13px", borderRadius: 11, border: "none", background: "linear-gradient(135deg, #5B8DEF, #7B65F0)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(91,141,239,0.35)", transition: "all 0.15s" }}>Unlock</button>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" autoFocus required
+              style={inputStyle(!!err)} />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required
+              style={inputStyle(!!err)} />
+            {err && <div style={{ color: "#E05555", fontSize: 12, marginBottom: 12, textAlign: "center" }}>{err}</div>}
+            <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px", borderRadius: 11, border: "none", background: loading ? "#2a2d3a" : "linear-gradient(135deg, #5B8DEF, #7B65F0)", color: loading ? "#545870" : "#fff", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", boxShadow: loading ? "none" : "0 4px 16px rgba(91,141,239,0.35)", transition: "all 0.15s" }}>{loading ? "Signing in…" : "Sign In"}</button>
           </form>
         </div>
       </div>
@@ -741,7 +760,7 @@ function ReportsTab({ sales, expenses, salespeople, settings }) {
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const { authed, login, logout }        = useAuth();
+  const { authed, loading: authLoading, login, logout } = useAuth();
   const { settings, save: saveSettings } = useSettings();
   const [tab, setTab]                    = useState("dashboard");
   const [dateRange, setDateRange]        = useState({ preset: "thisMonth", from: "", to: "" });
@@ -768,7 +787,8 @@ export default function App() {
   const owedCount    = filteredSales.filter(s => saleBalance(s) > 0 && !s.cancelledAt).length;
   const overdueCount = filteredSales.filter(s => isOverdue(s, settings.overdueDays)).length;
 
-  if (!authed) return <LockScreen onLogin={login} />;
+  if (authLoading) return <div style={{ minHeight: "100vh", background: "#090B11", display: "flex", alignItems: "center", justifyContent: "center" }}><Spinner /></div>;
+  if (!authed) return <LoginScreen onLogin={login} />;
 
   return (
     <div style={{ "--bg": "#090B11", "--card": "#111318", "--line": "#1C1F2E", "--text": "#E2E5F0", "--dim": "#545870", "--accent": "#5B8DEF", "--accent-soft": "rgba(91,141,239,0.1)", "--green": "#22D3A5", "--red": "#E05555", "--yellow": "#F0A429", "--purple": "#8B65F0", "--font": "'DM Sans', system-ui, sans-serif", "--mono": "'JetBrains Mono', 'Consolas', monospace", fontFamily: "var(--font)", color: "var(--text)", background: "var(--bg)", minHeight: "100vh" }}>
